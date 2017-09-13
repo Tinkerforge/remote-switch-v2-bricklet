@@ -278,8 +278,6 @@ Wire Wire Line
 NoConn ~ 9000 4600
 NoConn ~ 9000 4500
 NoConn ~ 9000 4400
-NoConn ~ 9000 4300
-NoConn ~ 9000 4200
 NoConn ~ 9000 4100
 $Comp
 L GND #PWR012
@@ -634,4 +632,55 @@ Wire Wire Line
 	4950 3550 4700 3550
 Text Notes 5650 3500 0    39   ~ 0
 SPI Master\nP0.6 : CH1-DX0 : MISO\nP0.7 : CH1-DOUT0 : MOSI\nP0.8 : CH1-SCLK_OUT : CLK\nP0.9 : CH1-SEL0 : CS
+Text GLabel 9750 4200 2    60   Input ~ 0
+DIO1
+Text GLabel 9750 4300 2    60   Input ~ 0
+DIO2
+Wire Wire Line
+	9000 4200 9100 4200
+Wire Wire Line
+	9000 4300 9100 4300
+Text GLabel 4700 4700 0    60   Input ~ 0
+DIO1
+Text GLabel 4700 4600 0    60   Input ~ 0
+DIO2
+$Comp
+L R_PACK4 RP?
+U 1 1 59B9C5C1
+P 9400 4450
+F 0 "RP?" H 9400 4900 40  0000 C CNN
+F 1 "220" H 9400 4400 40  0000 C CNN
+F 2 "4X0603" H 9400 4450 60  0001 C CNN
+F 3 "" H 9400 4450 60  0001 C CNN
+	1    9400 4450
+	-1   0    0    -1  
+$EndComp
+Wire Wire Line
+	9200 4100 9100 4100
+Wire Wire Line
+	9100 4100 9100 4200
+Wire Wire Line
+	9200 4400 9100 4400
+Wire Wire Line
+	9100 4400 9100 4300
+Wire Wire Line
+	9600 4400 9700 4400
+Wire Wire Line
+	9700 4400 9700 4300
+Wire Wire Line
+	9700 4300 9750 4300
+Wire Wire Line
+	9600 4100 9700 4100
+Wire Wire Line
+	9700 4100 9700 4200
+Wire Wire Line
+	9700 4200 9750 4200
+NoConn ~ 9200 4200
+NoConn ~ 9200 4300
+NoConn ~ 9600 4300
+NoConn ~ 9600 4200
+Wire Wire Line
+	4700 4600 4950 4600
+Wire Wire Line
+	4950 4700 4700 4700
 $EndSCHEMATC
