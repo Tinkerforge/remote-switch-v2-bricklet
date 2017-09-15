@@ -45,12 +45,7 @@
 #define RFM69_SERVICE_REQUEST_TX   3
 
 #define RFM69_RESET_PIN            P2_1
-
-// DIO2 data stream without gaussion filtering
-// DIO1 clk if gaussion filtering used
-
-// DIO1: bit synchronizer output
-// DIO2: data after rxready without bit synchronizer
+#define RFM69_FIFO_NOT_EMPTY_PIN   P1_0
 
 #define RFM69_IRQ_RX               11
 #define RFM69_IRQ_RX_PRIORITY      2

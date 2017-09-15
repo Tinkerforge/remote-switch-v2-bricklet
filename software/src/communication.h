@@ -40,6 +40,10 @@ void communication_init(void);
 #define REMOTE_SWITCH_V2_SWITCH_TO_OFF 0
 #define REMOTE_SWITCH_V2_SWITCH_TO_ON 1
 
+#define REMOTE_SWITCH_V2_REMOTE_TYPE_A 0
+#define REMOTE_SWITCH_V2_REMOTE_TYPE_B 1
+#define REMOTE_SWITCH_V2_REMOTE_TYPE_C 2
+
 #define REMOTE_SWITCH_V2_BOOTLOADER_MODE_BOOTLOADER 0
 #define REMOTE_SWITCH_V2_BOOTLOADER_MODE_FIRMWARE 1
 #define REMOTE_SWITCH_V2_BOOTLOADER_MODE_BOOTLOADER_WAIT_FOR_REBOOT 2
@@ -66,8 +70,16 @@ void communication_init(void);
 #define FID_SWITCH_SOCKET_B 6
 #define FID_DIM_SOCKET_B 7
 #define FID_SWITCH_SOCKET_C 8
+#define FID_SET_REMOTE_CONFIGURATION 9
+#define FID_GET_REMOTE_CONFIGURATION 10
+#define FID_GET_REMOTE_STATUS_A 11
+#define FID_GET_REMOTE_STATUS_B 12
+#define FID_GET_REMOTE_STATUS_C 13
 
 #define FID_CALLBACK_SWITCHING_DONE 2
+#define FID_CALLBACK_REMOTE_STATUS_A 14
+#define FID_CALLBACK_REMOTE_STATUS_B 15
+#define FID_CALLBACK_REMOTE_STATUS_C 16
 
 typedef struct {
 	TFPMessageHeader header;
@@ -124,6 +136,86 @@ typedef struct {
 	uint8_t switch_to;
 } __attribute__((__packed__)) SwitchSocketC;
 
+typedef struct {
+	TFPMessageHeader header;
+	uint8_t remote_type;
+	uint8_t minimum_repeats;
+	bool callback_enabled;
+} __attribute__((__packed__)) SetRemoteConfiguration;
+
+typedef struct {
+	TFPMessageHeader header;
+} __attribute__((__packed__)) GetRemoteConfiguration;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint8_t remote_type;
+	uint8_t minimum_repeats;
+	bool callback_enabled;
+} __attribute__((__packed__)) GetRemoteConfiguration_Response;
+
+typedef struct {
+	TFPMessageHeader header;
+} __attribute__((__packed__)) GetRemoteStatusA;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint8_t house_code;
+	uint8_t receiver_code;
+	uint8_t switch_to;
+	uint16_t repeats;
+} __attribute__((__packed__)) GetRemoteStatusA_Response;
+
+typedef struct {
+	TFPMessageHeader header;
+} __attribute__((__packed__)) GetRemoteStatusB;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint32_t address;
+	uint8_t unit;
+	uint8_t switch_to;
+	uint8_t dim_value;
+	uint16_t repeats;
+} __attribute__((__packed__)) GetRemoteStatusB_Response;
+
+typedef struct {
+	TFPMessageHeader header;
+	char system_code;
+	uint8_t device_code;
+	uint8_t switch_to;
+} __attribute__((__packed__)) GetRemoteStatusC;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint16_t repeats;
+} __attribute__((__packed__)) GetRemoteStatusC_Response;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint8_t house_code;
+	uint8_t receiver_code;
+	uint8_t switch_to;
+	uint16_t repeats;
+} __attribute__((__packed__)) RemoteStatusA_Callback;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint32_t address;
+	uint8_t unit;
+	uint8_t switch_to;
+	uint8_t dim_value;
+	uint16_t repeats;
+} __attribute__((__packed__)) RemoteStatusB_Callback;
+
+typedef struct {
+	TFPMessageHeader header;
+	char system_code;
+	uint8_t device_code;
+	uint8_t switch_to;
+	uint16_t repeats;
+} __attribute__((__packed__)) RemoteStatusC_Callback;
+
 
 // Function prototypes
 BootloaderHandleMessageResponse get_switching_state(const GetSwitchingState *data, GetSwitchingState_Response *response);
@@ -133,14 +225,25 @@ BootloaderHandleMessageResponse switch_socket_a(const SwitchSocketA *data);
 BootloaderHandleMessageResponse switch_socket_b(const SwitchSocketB *data);
 BootloaderHandleMessageResponse dim_socket_b(const DimSocketB *data);
 BootloaderHandleMessageResponse switch_socket_c(const SwitchSocketC *data);
+BootloaderHandleMessageResponse set_remote_configuration(const SetRemoteConfiguration *data);
+BootloaderHandleMessageResponse get_remote_configuration(const GetRemoteConfiguration *data, GetRemoteConfiguration_Response *response);
+BootloaderHandleMessageResponse get_remote_status_a(const GetRemoteStatusA *data, GetRemoteStatusA_Response *response);
+BootloaderHandleMessageResponse get_remote_status_b(const GetRemoteStatusB *data, GetRemoteStatusB_Response *response);
+BootloaderHandleMessageResponse get_remote_status_c(const GetRemoteStatusC *data, GetRemoteStatusC_Response *response);
 
 // Callbacks
 bool handle_switching_done_callback(void);
+bool handle_remote_status_a_callback(void);
+bool handle_remote_status_b_callback(void);
+bool handle_remote_status_c_callback(void);
 
 #define COMMUNICATION_CALLBACK_TICK_WAIT_MS 1
-#define COMMUNICATION_CALLBACK_HANDLER_NUM 1
+#define COMMUNICATION_CALLBACK_HANDLER_NUM 4
 #define COMMUNICATION_CALLBACK_LIST_INIT \
 	handle_switching_done_callback, \
+	handle_remote_status_a_callback, \
+	handle_remote_status_b_callback, \
+	handle_remote_status_c_callback, \
 
 
 #endif

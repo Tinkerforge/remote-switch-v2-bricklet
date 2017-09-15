@@ -25,20 +25,44 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define DATA_RECEIVE_COMMAND_NUM 2
+
+#define DATA_SWITCH_BUFFER_SIZE 64
+#define DATA_SPI_BUFFER_SIZE 128
+#define DATA_RECEIVE_COMMAND_BUFFER_SIZE 64
+
+#define DATA_RECEIVE_BUFFER_SIZE 4096
+#define DATA_RECEIVE_BUFFER_MASK (DATA_RECEIVE_BUFFER_SIZE-1)
+
 typedef struct {
 	uint8_t switching_state;
 	bool    switching_done_send_callback;
 
-	uint8_t data_switch[64];
+	uint8_t data_switch[DATA_SWITCH_BUFFER_SIZE];
 	uint8_t data_switch_length;
 	uint8_t switch_type_current;
 	uint8_t switch_type_new;
 	uint8_t switch_repeats;
 
-	uint8_t data_spi[128];
+	uint8_t data_spi[DATA_SPI_BUFFER_SIZE];
 	uint8_t data_read_index;
 	uint8_t data_write_index;
 	uint16_t data_length;
+
+	uint8_t data_receive[DATA_RECEIVE_BUFFER_SIZE];
+	uint16_t data_receive_end;
+	uint16_t data_receive_start;
+	uint8_t data_receive_start_bit;
+
+	uint32_t data_receive_command_last[DATA_RECEIVE_COMMAND_NUM];
+	uint16_t data_receive_command_count[DATA_RECEIVE_COMMAND_NUM];
+	uint32_t data_receive_command_new;
+	uint16_t data_receive_command_bit;
+	uint16_t data_receive_command_length;
+
+	uint8_t remote_type;
+	uint8_t remote_minimum_repeats;
+	bool remote_callback_enabled;
 } RFM69;
 
 
@@ -303,6 +327,8 @@ void rfm69_tick(void);
 #define RF_FDEVMSB_300000                       0x13
 #define RF_FDEVLSB_300000                       0x33
 
+// FRF = freq/61.03515625
+
 // RegFrf (MHz) - carrier frequency
 // 315Mhz band
 #define RF_FRFMSB_314                            0x4E
@@ -315,6 +341,9 @@ void rfm69_tick(void);
 #define RF_FRFMID_316                            0x00
 #define RF_FRFLSB_316                            0x00
 // 433mhz band
+#define RF_FRFMSB_433_92                         0x6C
+#define RF_FRFMID_433_92                         0x7a
+#define RF_FRFLSB_433_92                         0xe1
 #define RF_FRFMSB_433                            0x6C
 #define RF_FRFMID_433                            0x40
 #define RF_FRFLSB_433                            0x00
@@ -1081,6 +1110,8 @@ void rfm69_tick(void);
 #define RF_TEMP1_ADCLOWPOWER_ON               0x01  // Default
 #define RF_TEMP1_ADCLOWPOWER_OFF              0x00
 
+#define RFM69_DATA_SYNC1    0b10000000
+#define RFM69_DATA_SYNC2    0b00000000
 #define RFM69_DATA_FLOAT    0b10001110
 #define RFM69_DATA_ON       0b10001000
 #define RFM69_DATA_B_0      0b10100000
@@ -1115,12 +1146,17 @@ typedef enum {
 #define NUM_TYPE_CONFIGURATIONS 3
 #define NUM_TYPES 3
 
+#define TYPE_A_C_PACKET_LENGTH_RECEIVE 14
+
 #define TYPE_A_C_PACKET_LENGTH 16
 #define TYPE_B_PACKET_LENGTH 38
 #define TYPE_B_DIM_PACKET_LENGTH 42
 
-#define TYPE_A_C_BITRATEMSB 0x28 // ~350us half clock cycle (0x32 = 400us)
-#define TYPE_A_C_BITRATELSB 0x00
+//#define TYPE_A_C_BITRATEMSB 0x28 // ~350us half clock cycle (0x32 = 400us)
+//#define TYPE_A_C_BITRATELSB 0xA0
+
+#define TYPE_A_C_BITRATEMSB 0x27 // ~319us half clock cycle
+#define TYPE_A_C_BITRATELSB 0xE0
 #define TYPE_B_BITRATEMSB 0x20 // ~260us half clock cycle
 #define TYPE_B_BITRATELSB 0x82
 

@@ -37,6 +37,11 @@ BootloaderHandleMessageResponse handle_message(const void *message, void *respon
 		case FID_SWITCH_SOCKET_B: return switch_socket_b(message);
 		case FID_DIM_SOCKET_B: return dim_socket_b(message);
 		case FID_SWITCH_SOCKET_C: return switch_socket_c(message);
+		case FID_SET_REMOTE_CONFIGURATION: return set_remote_configuration(message);
+		case FID_GET_REMOTE_CONFIGURATION: return get_remote_configuration(message, response);
+		case FID_GET_REMOTE_STATUS_A: return get_remote_status_a(message, response);
+		case FID_GET_REMOTE_STATUS_B: return get_remote_status_b(message, response);
+		case FID_GET_REMOTE_STATUS_C: return get_remote_status_c(message, response);
 		default: return HANDLE_MESSAGE_RESPONSE_NOT_SUPPORTED;
 	}
 }
@@ -100,6 +105,11 @@ BootloaderHandleMessageResponse switch_socket_a(const SwitchSocketA *data) {
 	rfm69.data_switch[13] = 0b00000000;
 	rfm69.data_switch[14] = 0b00000000;
 	rfm69.data_switch[15] = 0b00000000;
+
+/*	for(uint8_t i = 0; i < 16; i++) {
+		uartbb_printf("s %u -> %b\n\r", i, rfm69.data_switch[i]);
+	}
+	uartbb_putnl();*/
 
 	rfm69.switching_state = REMOTE_SWITCH_V2_SWITCHING_STATE_BUSY;
 
@@ -285,7 +295,62 @@ BootloaderHandleMessageResponse switch_socket_c(const SwitchSocketC *data) {
 	return HANDLE_MESSAGE_RESPONSE_EMPTY;
 }
 
+BootloaderHandleMessageResponse set_remote_configuration(const SetRemoteConfiguration *data) {
+	if(rfm69.remote_type > REMOTE_SWITCH_V2_REMOTE_TYPE_C) {
+		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
+	}
 
+	rfm69.remote_type             = data->remote_type;
+	rfm69.remote_minimum_repeats  = data->minimum_repeats;
+	rfm69.remote_callback_enabled = data->callback_enabled;
+
+	switch(rfm69.remote_type) {
+		case REMOTE_SWITCH_V2_REMOTE_TYPE_A: rfm69.data_receive_command_length = TYPE_A_C_PACKET_LENGTH_RECEIVE; break;
+		case REMOTE_SWITCH_V2_REMOTE_TYPE_C: rfm69.data_receive_command_length = TYPE_A_C_PACKET_LENGTH_RECEIVE; break; // TODO: is this correct ?
+		default: break;
+	}
+
+	return HANDLE_MESSAGE_RESPONSE_EMPTY;
+}
+
+BootloaderHandleMessageResponse get_remote_configuration(const GetRemoteConfiguration *data, GetRemoteConfiguration_Response *response) {
+	response->header.length    = sizeof(GetRemoteConfiguration_Response);
+	response->remote_type      = rfm69.remote_type;
+	response->minimum_repeats  = rfm69.remote_minimum_repeats;
+	response->callback_enabled = rfm69.remote_callback_enabled;
+
+	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+}
+
+BootloaderHandleMessageResponse get_remote_status_a(const GetRemoteStatusA *data, GetRemoteStatusA_Response *response) {
+	response->header.length     = sizeof(GetRemoteStatusA_Response);
+
+	response->repeats           = rfm69.data_receive_command_count[REMOTE_SWITCH_V2_REMOTE_TYPE_A];
+
+	if(response->repeats == 0) {
+		response->house_code    = 0;
+		response->receiver_code = 0;
+		response->switch_to     = 0;
+	} else {
+		response->house_code    = rfm69.data_receive_command_last[REMOTE_SWITCH_V2_REMOTE_TYPE_A] & 0b11111;
+		response->receiver_code = (rfm69.data_receive_command_last[REMOTE_SWITCH_V2_REMOTE_TYPE_A] >> 5) & 0b11111;
+		response->switch_to     = (((rfm69.data_receive_command_last[REMOTE_SWITCH_V2_REMOTE_TYPE_A] >> 10) & 0b11) == 0b10) ? 0 : 1;
+	}
+
+	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+}
+
+BootloaderHandleMessageResponse get_remote_status_b(const GetRemoteStatusB *data, GetRemoteStatusB_Response *response) {
+	response->header.length = sizeof(GetRemoteStatusB_Response);
+
+	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+}
+
+BootloaderHandleMessageResponse get_remote_status_c(const GetRemoteStatusC *data, GetRemoteStatusC_Response *response) {
+	response->header.length = sizeof(GetRemoteStatusC_Response);
+
+	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+}
 
 
 bool handle_switching_done_callback(void) {
@@ -303,6 +368,99 @@ bool handle_switching_done_callback(void) {
 
 	if(bootloader_spitfp_is_send_possible(&bootloader_status.st)) {
 		bootloader_spitfp_send_ack_and_message(&bootloader_status, (uint8_t*)&cb, sizeof(SwitchingDone_Callback));
+		is_buffered = false;
+		return true;
+	} else {
+		is_buffered = true;
+	}
+
+	return false;
+}
+
+uint32_t  tt = 0;
+bool handle_remote_status_a_callback(void) {
+	static bool is_buffered = false;
+	static RemoteStatusA_Callback cb;
+
+	static uint32_t command = 0;
+	static uint32_t count   = 0;
+
+	if(!is_buffered) {
+		if(system_timer_is_time_elapsed_ms(tt, 250)) {
+			uartbb_printf("%d %d %d %d\n\r", rfm69.remote_callback_enabled, rfm69.remote_minimum_repeats, rfm69.data_receive_command_count[REMOTE_SWITCH_V2_REMOTE_TYPE_A], rfm69.data_receive_command_last[REMOTE_SWITCH_V2_REMOTE_TYPE_A]);
+			tt = system_timer_get_ms();
+		}
+		if(rfm69.remote_callback_enabled &&
+		   (rfm69.data_receive_command_count[REMOTE_SWITCH_V2_REMOTE_TYPE_A] >= rfm69.remote_minimum_repeats) &&
+		   ((rfm69.data_receive_command_count[REMOTE_SWITCH_V2_REMOTE_TYPE_A] != count) ||
+		    (rfm69.data_receive_command_last[REMOTE_SWITCH_V2_REMOTE_TYPE_A] != command))) {
+
+			command = rfm69.data_receive_command_last[REMOTE_SWITCH_V2_REMOTE_TYPE_A];
+			count = rfm69.data_receive_command_count[REMOTE_SWITCH_V2_REMOTE_TYPE_A];
+
+			tfp_make_default_header(&cb.header, bootloader_get_uid(), sizeof(RemoteStatusA_Callback), FID_CALLBACK_REMOTE_STATUS_A);
+			cb.repeats           = count;
+
+			if(count == 0) {
+				cb.house_code    = 0;
+				cb.receiver_code = 0;
+				cb.switch_to     = 0;
+			} else {
+				cb.house_code    = command & 0b11111;
+				cb.receiver_code = (command >> 5) & 0b11111;
+				cb.switch_to     = (((command >> 10) & 0b11) == 0b10) ? 0 : 1;
+			}
+		} else {
+			return false;
+		}
+	}
+
+	if(bootloader_spitfp_is_send_possible(&bootloader_status.st)) {
+		bootloader_spitfp_send_ack_and_message(&bootloader_status, (uint8_t*)&cb, sizeof(RemoteStatusA_Callback));
+		is_buffered = false;
+		return true;
+	} else {
+		is_buffered = true;
+	}
+
+	return false;
+}
+
+bool handle_remote_status_b_callback(void) {
+	static bool is_buffered = false;
+	static RemoteStatusB_Callback cb;
+
+	if(!is_buffered) {
+		tfp_make_default_header(&cb.header, bootloader_get_uid(), sizeof(RemoteStatusB_Callback), FID_CALLBACK_REMOTE_STATUS_B);
+		// TODO: Implement RemoteStatusB callback handling
+
+		return false;
+	}
+
+	if(bootloader_spitfp_is_send_possible(&bootloader_status.st)) {
+		bootloader_spitfp_send_ack_and_message(&bootloader_status, (uint8_t*)&cb, sizeof(RemoteStatusB_Callback));
+		is_buffered = false;
+		return true;
+	} else {
+		is_buffered = true;
+	}
+
+	return false;
+}
+
+bool handle_remote_status_c_callback(void) {
+	static bool is_buffered = false;
+	static RemoteStatusC_Callback cb;
+
+	if(!is_buffered) {
+		tfp_make_default_header(&cb.header, bootloader_get_uid(), sizeof(RemoteStatusC_Callback), FID_CALLBACK_REMOTE_STATUS_C);
+
+
+		return false;
+	}
+
+	if(bootloader_spitfp_is_send_possible(&bootloader_status.st)) {
+		bootloader_spitfp_send_ack_and_message(&bootloader_status, (uint8_t*)&cb, sizeof(RemoteStatusC_Callback));
 		is_buffered = false;
 		return true;
 	} else {

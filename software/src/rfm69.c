@@ -38,18 +38,17 @@ RFM69 rfm69;
 #define rfm69_rx_irq_handler IRQ_Hdlr_11
 #define rfm69_tx_irq_handler IRQ_Hdlr_12
 
-const uint8_t rfm69_config[][2] = {
-	{REG_FRFMSB, RF_FRFMSB_433}, // 433 Mhz
-	{REG_FRFMID, RF_FRFMID_433},
-	{REG_FRFLSB, RF_FRFLSB_433},
-//	{REG_FDEVMSB, 0x10}, // Frequency deviation
-//	{REG_FDEVLSB, 0x00},
-	{REG_DATAMODUL, RF_DATAMODUL_DATAMODE_CONTINUOUSNOBSYNC | RF_DATAMODUL_MODULATIONTYPE_OOK | RF_DATAMODUL_MODULATIONSHAPING_00}, // Use OOK
+const uint8_t rfm69_config_general[][2] = {
+	{REG_FRFMSB, RF_FRFMSB_433_92}, // 433.92 Mhz
+	{REG_FRFMID, RF_FRFMID_433_92},
+	{REG_FRFLSB, RF_FRFLSB_433_92},
+	{REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_24}, // TODO: Find good value
+	{REG_DATAMODUL, RF_DATAMODUL_DATAMODE_CONTINUOUS | RF_DATAMODUL_MODULATIONTYPE_OOK | RF_DATAMODUL_MODULATIONSHAPING_00}, // Use OOK
 	{REG_BITRATEMSB, TYPE_A_C_BITRATEMSB},
 	{REG_BITRATELSB, TYPE_A_C_BITRATELSB},
 	{REG_PREAMBLEMSB, 0x00}, // no preamble
 	{REG_PREAMBLELSB, 0x00},
-	{REG_SYNCCONFIG, RF_SYNC_OFF}, // Use empty sync to assure small pause between commands
+	{REG_SYNCCONFIG, RF_SYNC_OFF | RF_SYNC_FIFOFILL_MANUAL}, // Use empty sync to assure small pause between commands
 	{REG_SYNCVALUE1, 0},
 	{REG_SYNCVALUE2, 0},
 	{REG_SYNCVALUE3, 0},
@@ -58,30 +57,47 @@ const uint8_t rfm69_config[][2] = {
 	{REG_SYNCVALUE6, 0},
 	{REG_SYNCVALUE7, 0},
 	{REG_SYNCVALUE8, 0},
-	{REG_PACKETCONFIG1, RF_PACKET1_FORMAT_VARIABLE | RF_PACKET1_DCFREE_OFF | RF_PACKET1_CRC_OFF},
-	{REG_PAYLOADLENGTH, TYPE_A_C_PACKET_LENGTH},
+	{REG_PACKETCONFIG1, RF_PACKET1_FORMAT_FIXED | RF_PACKET1_DCFREE_OFF | RF_PACKET1_CRC_OFF},
+	{REG_PAYLOADLENGTH, 0},
 	{REG_FIFOTHRESH, RF_FIFOTHRESH_TXSTART_FIFONOTEMPTY}, // Set fifo threshold, send when threshold reached
-	{REG_PALEVEL, RF_PALEVEL_OUTPUTPOWER_11111 | RF_PALEVEL_PA0_ON}, // w/o power amplifier
-//	{REG_PALEVEL, RF_PALEVEL_OUTPUTPOWER_11111 | RF_PALEVEL_PA1_ON | RF_PALEVEL_PA2_ON}, // w/ power amplifier: PA 1 and 2 on, 20dBm
-	{REG_OCP, RF_OCP_OFF | RF_OCP_TRIM_120}, // OCP off, trimming at 120mA
-//	{REG_TESTPA1, 0x5D}, // High power mode (only in hw version)
-//	{REG_TESTPA2, 0x7C}, // High power mode (only in hw version)
-	{REG_OPMODE, RF_OPMODE_STANDBY}, // Set mode to transmitter
-//	{REG_DIOMAPPING1, 0b01010101},
+	{REG_PALEVEL, RF_PALEVEL_OUTPUTPOWER_11111},
+	{REG_DIOMAPPING1, 0b00000000},
+	{REG_DIOMAPPING2, 0b00010111},
+	{REG_LNA, RF_LNA_ZIN_50 | RF_LNA_GAINSELECT_AUTO},
 	{REG_ENDOFCONFIG, 0}
 };
 
-const uint8_t rfm69_type_registers[NUM_TYPE_CONFIGURATIONS] = {
+const uint8_t rfm69_config_receive[][2] = {
+	{REG_PACKETCONFIG1, RF_PACKET1_FORMAT_FIXED | RF_PACKET1_DCFREE_OFF | RF_PACKET1_CRC_OFF},
+	{REG_PAYLOADLENGTH, 0},
+	{REG_PALEVEL, RF_PALEVEL_OUTPUTPOWER_11111}, // disable amplifier (otherwise we can't receive)
+	{REG_OCP, RF_OCP_ON | RF_OCP_TRIM_95}, // OCP on
+	{REG_TESTPA1, 0x55}, // Disable high power mode (only in hw version)
+	{REG_TESTPA2, 0x70}, // Disable high power mode (only in hw version)
+	{REG_ENDOFCONFIG, 0}
+};
+
+const uint8_t rfm69_config_transmit[][2] = {
+	{REG_PACKETCONFIG1, RF_PACKET1_FORMAT_VARIABLE | RF_PACKET1_DCFREE_OFF | RF_PACKET1_CRC_OFF},
+	{REG_PALEVEL, RF_PALEVEL_OUTPUTPOWER_11111 | RF_PALEVEL_PA1_ON | RF_PALEVEL_PA2_ON}, // w/ power amplifier: PA 1 and 2 on, 20dBm
+	{REG_OCP, RF_OCP_OFF | RF_OCP_TRIM_120}, // OCP off, trimming at 120mA
+	{REG_TESTPA1, 0x5D}, // High power mode (only in hw version)
+	{REG_TESTPA2, 0x7C}, // High power mode (only in hw version)
+	{REG_ENDOFCONFIG, 0}
+};
+
+const uint8_t rfm69_type_registers_transmit[NUM_TYPE_CONFIGURATIONS] = {
 	REG_BITRATEMSB,
 	REG_BITRATELSB,
 	REG_PAYLOADLENGTH,
 };
 
-const uint8_t rfm69_type_configurations[NUM_TYPES][NUM_TYPE_CONFIGURATIONS] = {
+const uint8_t rfm69_type_configurations_transmit[NUM_TYPES][NUM_TYPE_CONFIGURATIONS] = {
 	{TYPE_A_C_BITRATEMSB, TYPE_A_C_BITRATELSB, TYPE_A_C_PACKET_LENGTH},
 	{TYPE_B_BITRATEMSB, TYPE_B_BITRATELSB, TYPE_B_PACKET_LENGTH},
 	{TYPE_B_BITRATEMSB, TYPE_B_BITRATELSB, TYPE_B_DIM_PACKET_LENGTH},
 };
+
 
 void __attribute__((optimize("-O3"))) rfm69_rx_irq_handler(void) {
 	while(!XMC_USIC_CH_RXFIFO_IsEmpty(RFM69_USIC)) {
@@ -141,12 +157,34 @@ void rfm69_task_write_register(const uint8_t reg, const uint8_t *data, const uin
 }
 
 void rfm69_task_configure_receive(void) {
+	// Set general receive config
+	for(uint8_t i = 0; rfm69_config_receive[i][0] != REG_ENDOFCONFIG; i++) {
+		rfm69_task_write_register(rfm69_config_receive[i][0], &rfm69_config_receive[i][1], 1);
+	}
+
+	// Set bitrate in correspondence with remote type
+	uint8_t bitrate_data;
+	if((rfm69.remote_type == REMOTE_SWITCH_V2_REMOTE_TYPE_A) || (rfm69.remote_type == REMOTE_SWITCH_V2_REMOTE_TYPE_C)) {
+		bitrate_data = TYPE_A_C_BITRATEMSB/2;
+	} else {
+		bitrate_data = TYPE_B_BITRATEMSB;
+	}
+	rfm69_task_write_register(REG_BITRATEMSB, &bitrate_data, 1);
+
+	if((rfm69.remote_type == REMOTE_SWITCH_V2_REMOTE_TYPE_A) || (rfm69.remote_type == REMOTE_SWITCH_V2_REMOTE_TYPE_C)) {
+		bitrate_data = TYPE_A_C_BITRATELSB/2;
+	} else {
+		bitrate_data = TYPE_B_BITRATELSB;
+	}
+	rfm69_task_write_register(REG_BITRATELSB, &bitrate_data, 1);
+
+	// Change to standby mode
 	uint8_t data_opmode;
 	rfm69_task_read_register(REG_OPMODE, &data_opmode, 1);
 	while(!(data_opmode & RF_OPMODE_STANDBY)) {
 		uint8_t data_irqflags2;
 		rfm69_task_read_register(REG_IRQFLAGS2, &data_irqflags2, 1);
-		if((!(data_irqflags2 & RF_IRQFLAGS2_FIFONOTEMPTY))) {
+		if((data_opmode != RF_OPMODE_TRANSMITTER) || (!(data_irqflags2 & RF_IRQFLAGS2_FIFONOTEMPTY))) {
 			uint8_t data = RF_OPMODE_STANDBY;
 			rfm69_task_write_register(REG_OPMODE, &data, 1);
 		}
@@ -154,20 +192,40 @@ void rfm69_task_configure_receive(void) {
 		rfm69_task_read_register(REG_OPMODE, &data_opmode, 1);
 	}
 
-	uint8_t data_modul = RF_DATAMODUL_DATAMODE_CONTINUOUSNOBSYNC | RF_DATAMODUL_MODULATIONTYPE_OOK | RF_DATAMODUL_MODULATIONSHAPING_00;
-	rfm69_task_write_register(REG_DATAMODUL, &data_modul, 1);
-
+	// Enable receiver
 	uint8_t data = RF_OPMODE_RECEIVER;
 	rfm69_task_write_register(REG_OPMODE, &data, 1);
+
+	// Wait for receiver to be ready
+	uint8_t data_irqflags1 = 0;
+	do {
+		rfm69_task_read_register(REG_IRQFLAGS1, &data_irqflags1, 1);
+	} while(!(data_irqflags1 & RF_IRQFLAGS1_RXREADY));
+
+
+	// Reset command data
+	rfm69.data_receive_command_bit = 0;
+	rfm69.data_receive_command_new = 0;
 }
 
 void rfm69_task_configure_transmit(void) {
+	// Set general transmit config
+	for(uint8_t i = 0; rfm69_config_transmit[i][0] != REG_ENDOFCONFIG; i++) {
+		rfm69_task_write_register(rfm69_config_transmit[i][0], &rfm69_config_transmit[i][1], 1);
+	}
+
+	// Set type specific transmit config
+	for(uint8_t i = 0; i < NUM_TYPE_CONFIGURATIONS; i++) {
+		rfm69_task_write_register(rfm69_type_registers_transmit[i], &rfm69_type_configurations_transmit[rfm69.switch_type_new][i], 1);
+	}
+
+	// Make sure that we are in standby mode
 	uint8_t data_opmode;
 	rfm69_task_read_register(REG_OPMODE, &data_opmode, 1);
 	while(!(data_opmode & RF_OPMODE_STANDBY)) {
 		uint8_t data_irqflags2;
 		rfm69_task_read_register(REG_IRQFLAGS2, &data_irqflags2, 1);
-		if((!(data_irqflags2 & RF_IRQFLAGS2_FIFONOTEMPTY))) {
+		if((data_opmode != RF_OPMODE_TRANSMITTER) || (!(data_irqflags2 & RF_IRQFLAGS2_FIFONOTEMPTY))) {
 			uint8_t data = RF_OPMODE_STANDBY;
 			rfm69_task_write_register(REG_OPMODE, &data, 1);
 		}
@@ -175,78 +233,173 @@ void rfm69_task_configure_transmit(void) {
 		rfm69_task_read_register(REG_OPMODE, &data_opmode, 1);
 	}
 
-	uint8_t data_modul = RF_DATAMODUL_DATAMODE_PACKET | RF_DATAMODUL_MODULATIONTYPE_OOK | RF_DATAMODUL_MODULATIONSHAPING_00;
-	rfm69_task_write_register(REG_DATAMODUL, &data_modul, 1);
+	// Update switch type
+	rfm69.data_switch_length = rfm69_type_configurations_transmit[rfm69.switch_type_new][2];
+	rfm69.switch_type_current = rfm69.switch_type_new;
 }
 
 void rfm69_task_switch(void) {
-	rfm69_task_configure_transmit();
-
-	if(rfm69.switch_type_current != rfm69.switch_type_new) {
-		for(uint8_t i = 0; i < NUM_TYPE_CONFIGURATIONS; i++) {
-			rfm69_task_write_register(rfm69_type_registers[i], &rfm69_type_configurations[rfm69.switch_type_new][i], 1);
+	// Change to standby mode
+	uint8_t data_opmode;
+	rfm69_task_read_register(REG_OPMODE, &data_opmode, 1);
+	while(!(data_opmode & RF_OPMODE_STANDBY)) {
+		uint8_t data_irqflags2;
+		rfm69_task_read_register(REG_IRQFLAGS2, &data_irqflags2, 1);
+		if((data_opmode != RF_OPMODE_TRANSMITTER) || (!(data_irqflags2 & RF_IRQFLAGS2_FIFONOTEMPTY))) {
+			uint8_t data = RF_OPMODE_STANDBY;
+			rfm69_task_write_register(REG_OPMODE, &data, 1);
 		}
 
-		rfm69.data_switch_length = rfm69_type_configurations[rfm69.switch_type_new][2];
-		rfm69.switch_type_current = rfm69.switch_type_new;
+		rfm69_task_read_register(REG_OPMODE, &data_opmode, 1);
 	}
 
+	// Configure for transmit
+	rfm69_task_configure_transmit();
+
 	for(uint16_t i = 0; i < rfm69.switch_repeats; i++) {
-		uint8_t data_opmode;
-		rfm69_task_read_register(REG_OPMODE, &data_opmode, 1);
-		while(!(data_opmode & RF_OPMODE_STANDBY)) {
-			uint8_t data_irqflags2;
-			rfm69_task_read_register(REG_IRQFLAGS2, &data_irqflags2, 1);
-			if((!(data_irqflags2 & RF_IRQFLAGS2_FIFONOTEMPTY))) {
-				uint8_t data = RF_OPMODE_STANDBY;
-				rfm69_task_write_register(REG_OPMODE, &data, 1);
-			}
+		// Put data in fifo
+		rfm69_task_write_register(REG_FIFO, rfm69.data_switch, rfm69.data_switch_length);
 
-			rfm69_task_read_register(REG_OPMODE, &data_opmode, 1);
-		}
+		// Activate transmitter
+		uint8_t data = RF_OPMODE_TRANSMITTER;
+		rfm69_task_write_register(REG_OPMODE, &data, 1);
 
-		uint8_t data_irqflags2;
+		// Wait until transmit begins
+		uint8_t data_irqflags1 = 0;
+		do {
+			rfm69_task_read_register(REG_IRQFLAGS1, &data_irqflags1, 1);
+		} while(!(data_irqflags1 & RF_IRQFLAGS1_TXREADY));
+
+		// Wait until fifo empty
+		uint8_t data_irqflags2 = 0;
 		do {
 			rfm69_task_read_register(REG_IRQFLAGS2, &data_irqflags2, 1);
 		} while(data_irqflags2 & RF_IRQFLAGS2_FIFONOTEMPTY);
 
-		rfm69_task_write_register(REG_FIFO, rfm69.data_switch, rfm69.data_switch_length);
-		uint8_t data = RF_OPMODE_TRANSMITTER;
-		rfm69_task_write_register(REG_OPMODE, &data, 1);
+		// Wait until we are in standby again
+		do {
+			rfm69_task_read_register(REG_OPMODE, &data_opmode, 1);
+		} while(!(data_opmode & RF_OPMODE_STANDBY));
 	}
 
-	uint8_t data_opmode;
-	do {
-		rfm69_task_read_register(REG_OPMODE, &data_opmode, 1);
-	} while(!(data_opmode & RF_OPMODE_STANDBY));
+	// Go back to receive mode
+	rfm69_task_configure_receive();
 
-	uint8_t data_irqflags2;
-	rfm69_task_read_register(REG_IRQFLAGS2, &data_irqflags2, 1);
-	if((!(data_irqflags2 & RF_IRQFLAGS2_FIFONOTEMPTY))) {
-		uint8_t data = RF_OPMODE_STANDBY;
-		rfm69_task_write_register(REG_OPMODE, &data, 1);
-	}
-
+	// Wait for 200ms to be sure that send is done,
+	// also we can't to transmit data in rapid succession
 	coop_task_sleep_ms(200);
+
 	rfm69.switching_state = REMOTE_SWITCH_V2_SWITCHING_STATE_READY;
 	rfm69.switching_done_send_callback = true;
 
-	rfm69_task_configure_receive();
+	// Clear fifo
+	while(XMC_GPIO_GetInput(RFM69_FIFO_NOT_EMPTY_PIN)) {
+		uint8_t data;
+		rfm69_task_read_register(REG_FIFO, &data, 1);
+	}
+}
+
+void rfm69_task_handle_buffer(void) {
+	// Calculate number of buffered bytes
+	int32_t bytes = rfm69.data_receive_end - rfm69.data_receive_start;
+	if(bytes < 0) {
+		bytes += DATA_RECEIVE_BUFFER_SIZE;
+	}
+
+	// Only try to handle the data if there is enough data in the buffer for at least one command
+	while(bytes > rfm69.data_receive_command_length) {
+		for(uint8_t i = 0; i < rfm69.data_receive_command_length; i++) {
+			uint8_t data = (rfm69.data_receive[rfm69.data_receive_start + i] << rfm69.data_receive_start_bit) & 0xFF;
+			data |= (rfm69.data_receive[(rfm69.data_receive_start + i + 1) & DATA_RECEIVE_BUFFER_MASK] >> (8-rfm69.data_receive_start_bit)) & 0xFF;
+
+			if(((data == RFM69_DATA_ON) || (data == RFM69_DATA_FLOAT)) ||
+			   ((rfm69.data_receive_command_bit == 12) && (data == RFM69_DATA_SYNC1)) ||
+			   ((rfm69.data_receive_command_bit == 13) && (data == RFM69_DATA_SYNC2))) {
+				if(data == RFM69_DATA_ON) {
+					rfm69.data_receive_command_new |= (1 << rfm69.data_receive_command_bit);
+				}
+				rfm69.data_receive_command_bit++;
+
+				if(rfm69.data_receive_command_bit == rfm69.data_receive_command_length) {
+					// TODO: don't accept if onoff is not 10 or 01!
+					if(rfm69.data_receive_command_last[rfm69.remote_type] == rfm69.data_receive_command_new) {
+						rfm69.data_receive_command_count[rfm69.remote_type]++;
+					} else {
+						rfm69.data_receive_command_count[rfm69.remote_type] = 1;
+					}
+					rfm69.data_receive_command_last[rfm69.remote_type] = rfm69.data_receive_command_new;
+
+					uint8_t house_code = rfm69.data_receive_command_new & 0b11111;
+					uint8_t receiver_code = (rfm69.data_receive_command_new >> 5) & 0b11111;
+					uint8_t onoff = 1;
+					if(((rfm69.data_receive_command_new >> 10) & 0b11) == 0b10) {
+						onoff = 0;
+					}
+					uartbb_printf("code=%b, house=%b, receiver=%b, on=%u, atbit=%u (%u)\n\r", rfm69.data_receive_command_new, house_code, receiver_code, onoff, rfm69.data_receive_start_bit, rfm69.data_receive_command_count[rfm69.remote_type]);
+
+					rfm69.data_receive_command_bit = 0;
+					rfm69.data_receive_command_new = 0;
+					rfm69.data_receive_start = (rfm69.data_receive_start + rfm69.data_receive_command_length) & DATA_RECEIVE_BUFFER_MASK;
+				}
+			} else {
+				if(rfm69.data_receive_command_bit > 2) {
+					uint8_t house_code = rfm69.data_receive_command_new & 0b11111;
+					uint8_t receiver_code = (rfm69.data_receive_command_new >> 5) & 0b11111;
+					uint8_t onoff = 1;
+					if(((rfm69.data_receive_command_new >> 10) & 0b11) == 0b10) {
+						onoff = 0;
+					}
+					uartbb_printf("abort code=%b house=%b, receiver=%b, on=%u, atbit=%u upto=%u\n\r", rfm69.data_receive_command_new, house_code, receiver_code, onoff, rfm69.data_receive_start_bit, rfm69.data_receive_command_bit);
+
+				}
+
+				rfm69.data_receive_command_bit = 0;
+				rfm69.data_receive_command_new = 0;
+				rfm69.data_receive_start_bit++;
+				if(rfm69.data_receive_start_bit == 8) {
+					rfm69.data_receive_start_bit = 0;
+					rfm69.data_receive_start = (rfm69.data_receive_start + 1) & DATA_RECEIVE_BUFFER_MASK;
+				}
+
+				break;
+			}
+		}
+
+		bytes = rfm69.data_receive_end - rfm69.data_receive_start;
+		if(bytes < 0) {
+			bytes += DATA_RECEIVE_BUFFER_SIZE;
+		}
+
+	}
+
 }
 
 void rfm69_task_tick(void) {
-	for(uint8_t i = 0; rfm69_config[i][0] != REG_ENDOFCONFIG; i++) {
-		rfm69_task_write_register(rfm69_config[i][0], &rfm69_config[i][1], 1);
+	// Give the RFM69 some time to wake up properly
+	coop_task_sleep_ms(50);
+
+	// Set general config that is used for send and receive
+	for(uint8_t i = 0; rfm69_config_general[i][0] != REG_ENDOFCONFIG; i++) {
+		rfm69_task_write_register(rfm69_config_general[i][0], &rfm69_config_general[i][1], 1);
 	}
 
+	// Change to receive mode
 	rfm69_task_configure_receive();
 
 	while(true) {
+		// If the user wants to turn a remote switch on/off, we do this first
 		if(rfm69.switching_state == REMOTE_SWITCH_V2_SWITCHING_STATE_BUSY) {
 			rfm69_task_switch();
+		// Else, if there is data in the FIFO we handle it
+		} else if(XMC_GPIO_GetInput(RFM69_FIFO_NOT_EMPTY_PIN)) {
+			uint8_t data;
+			rfm69_task_read_register(REG_FIFO, &data, 1);
+			rfm69.data_receive[rfm69.data_receive_end] = data;
+			rfm69.data_receive_end = (rfm69.data_receive_end + 1) & DATA_RECEIVE_BUFFER_MASK;
+			rfm69_task_handle_buffer();
+		} else {
+			coop_task_yield();
 		}
-
-		coop_task_yield();
 	}
 }
 
@@ -317,7 +470,6 @@ void rfm69_init_spi(void) {
 
 	// Configure receive FIFO
 	XMC_USIC_CH_RXFIFO_Configure(RFM69_USIC, 32, XMC_USIC_CH_FIFO_SIZE_16WORDS, 8);
-//	RFM69_USIC->RBCTR |= USIC_CH_RBCTR_SRBTM_Msk; // RX Interrupt for >= 0
 
 	// Set service request for tx FIFO transmit interrupt
 	XMC_USIC_CH_TXFIFO_SetInterruptNodePointer(RFM69_USIC, XMC_USIC_CH_TXFIFO_INTERRUPT_NODE_POINTER_STANDARD, RFM69_SERVICE_REQUEST_TX);  // IRQ RFM69_IRQ_TX
@@ -346,8 +498,6 @@ void rfm69_init_spi(void) {
 	// Configure MOSI pin
 	XMC_GPIO_Init(RFM69_MOSI_PIN, &mosi_pin_config);
 
-//	XMC_USIC_CH_EnableEvent(RFM69_USIC, (uint32_t)((uint32_t)XMC_USIC_CH_EVENT_STANDARD_RECEIVE | (uint32_t)XMC_USIC_CH_EVENT_ALTERNATIVE_RECEIVE));
-
 	XMC_USIC_CH_RXFIFO_Flush(RFM69_USIC);
 	XMC_USIC_CH_RXFIFO_EnableEvent(RFM69_USIC, XMC_USIC_CH_RXFIFO_EVENT_CONF_STANDARD | XMC_USIC_CH_RXFIFO_EVENT_CONF_ALTERNATE);
 }
@@ -357,6 +507,27 @@ void rfm69_init(void) {
 	rfm69.switch_repeats = 5;
 	rfm69.switch_type_current = 255;
 	rfm69.switching_state = REMOTE_SWITCH_V2_SWITCHING_STATE_READY;
+
+	rfm69.data_receive_command_length = TYPE_A_C_PACKET_LENGTH_RECEIVE;
+
+	rfm69.remote_callback_enabled = false;
+	rfm69.remote_minimum_repeats = 2;
+	rfm69.remote_type = REMOTE_SWITCH_V2_REMOTE_TYPE_A;
+
+	// FIFO pin configuration
+	const XMC_GPIO_CONFIG_t fifo_pin_config = {
+		.mode             = XMC_GPIO_MODE_INPUT_TRISTATE,
+		.input_hysteresis = XMC_GPIO_INPUT_HYSTERESIS_STANDARD
+	};
+	XMC_GPIO_Init(RFM69_FIFO_NOT_EMPTY_PIN, &fifo_pin_config);
+	XMC_GPIO_SetHardwareControl(RFM69_FIFO_NOT_EMPTY_PIN, XMC_GPIO_HWCTRL_DISABLED);
+
+	// Test pin configuration (TODO: Remove me)
+	const XMC_GPIO_CONFIG_t test_pin_config = {
+		.mode             = XMC_GPIO_MODE_OUTPUT_PUSH_PULL,
+		.output_level     = XMC_GPIO_OUTPUT_LEVEL_LOW
+	};
+	XMC_GPIO_Init(P0_5, &test_pin_config);
 
 	rfm69_init_spi();
 	coop_task_init(&rfm69_task, rfm69_task_tick);
