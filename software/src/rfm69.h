@@ -25,13 +25,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define DATA_RECEIVE_COMMAND_NUM 2
+#define DATA_RECEIVE_COMMAND_NUM 3
 
 #define DATA_SWITCH_BUFFER_SIZE 64
 #define DATA_SPI_BUFFER_SIZE 128
 #define DATA_RECEIVE_COMMAND_BUFFER_SIZE 64
 
-#define DATA_RECEIVE_BUFFER_SIZE 4096
+#define DATA_RECEIVE_BUFFER_SIZE 2048
 #define DATA_RECEIVE_BUFFER_MASK (DATA_RECEIVE_BUFFER_SIZE-1)
 
 typedef struct {
@@ -49,20 +49,21 @@ typedef struct {
 	uint8_t data_write_index;
 	uint16_t data_length;
 
-	uint8_t data_receive[DATA_RECEIVE_BUFFER_SIZE];
+	uint16_t data_receive[DATA_RECEIVE_BUFFER_SIZE];
 	uint16_t data_receive_end;
 	uint16_t data_receive_start;
 	uint8_t data_receive_start_bit;
 
-	uint32_t data_receive_command_last[DATA_RECEIVE_COMMAND_NUM];
+	uint64_t data_receive_command_last[DATA_RECEIVE_COMMAND_NUM];
 	uint16_t data_receive_command_count[DATA_RECEIVE_COMMAND_NUM];
-	uint32_t data_receive_command_new;
+	uint64_t data_receive_command_new;
 	uint16_t data_receive_command_bit;
 	uint16_t data_receive_command_length;
 
 	uint8_t remote_type;
 	uint8_t remote_minimum_repeats;
 	bool remote_callback_enabled;
+	bool remote_update;
 } RFM69;
 
 
@@ -1116,6 +1117,7 @@ void rfm69_tick(void);
 #define RFM69_DATA_ON       0b10001000
 #define RFM69_DATA_B_0      0b10100000
 #define RFM69_DATA_B_1      0b10000010
+
 #define RFM69_SWITCH_TO_OFF 0
 #define RFM69_SWITCH_TO_ON  1
 #define RFM69_READY         0
@@ -1147,13 +1149,20 @@ typedef enum {
 #define NUM_TYPES 3
 
 #define TYPE_A_C_PACKET_LENGTH_RECEIVE 14
+#define TYPE_B_PACKET_LENGTH_RECEIVE 35
 
 #define TYPE_A_C_PACKET_LENGTH 16
 #define TYPE_B_PACKET_LENGTH 38
 #define TYPE_B_DIM_PACKET_LENGTH 42
 
-//#define TYPE_A_C_BITRATEMSB 0x28 // ~350us half clock cycle (0x32 = 400us)
-//#define TYPE_A_C_BITRATELSB 0xA0
+// us * 32 to calculate bitrate
+
+#define TYPE_C_RECV_BITRATEMSB 0x16 // ~356us half clock cycle with double bitrate
+#define TYPE_C_RECV_BITRATELSB 0x50
+#define TYPE_B_RECV_BITRATEMSB 0x10 // ~260us half clock cycle with double bitrate
+#define TYPE_B_RECV_BITRATELSB 0x41
+#define TYPE_A_RECV_BITRATEMSB 0x13 // ~319us half clock cycle with double bitrate
+#define TYPE_A_RECV_BITRATELSB 0xF0
 
 #define TYPE_A_C_BITRATEMSB 0x27 // ~319us half clock cycle
 #define TYPE_A_C_BITRATELSB 0xE0

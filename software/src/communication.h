@@ -181,13 +181,13 @@ typedef struct {
 
 typedef struct {
 	TFPMessageHeader header;
-	char system_code;
-	uint8_t device_code;
-	uint8_t switch_to;
 } __attribute__((__packed__)) GetRemoteStatusC;
 
 typedef struct {
 	TFPMessageHeader header;
+	char system_code;
+	uint8_t device_code;
+	uint8_t switch_to;
 	uint16_t repeats;
 } __attribute__((__packed__)) GetRemoteStatusC_Response;
 

@@ -42,8 +42,8 @@ const uint8_t rfm69_config_general[][2] = {
 	{REG_FRFMSB, RF_FRFMSB_433_92}, // 433.92 Mhz
 	{REG_FRFMID, RF_FRFMID_433_92},
 	{REG_FRFLSB, RF_FRFLSB_433_92},
-	{REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_24}, // TODO: Find good value
-	{REG_DATAMODUL, RF_DATAMODUL_DATAMODE_CONTINUOUS | RF_DATAMODUL_MODULATIONTYPE_OOK | RF_DATAMODUL_MODULATIONSHAPING_00}, // Use OOK
+	{REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_24},
+	{REG_DATAMODUL, RF_DATAMODUL_DATAMODE_PACKET | RF_DATAMODUL_MODULATIONTYPE_OOK | RF_DATAMODUL_MODULATIONSHAPING_00}, // Use OOK
 	{REG_BITRATEMSB, TYPE_A_C_BITRATEMSB},
 	{REG_BITRATELSB, TYPE_A_C_BITRATELSB},
 	{REG_PREAMBLEMSB, 0x00}, // no preamble
@@ -164,19 +164,22 @@ void rfm69_task_configure_receive(void) {
 
 	// Set bitrate in correspondence with remote type
 	uint8_t bitrate_data;
-	if((rfm69.remote_type == REMOTE_SWITCH_V2_REMOTE_TYPE_A) || (rfm69.remote_type == REMOTE_SWITCH_V2_REMOTE_TYPE_C)) {
-		bitrate_data = TYPE_A_C_BITRATEMSB/2;
-	} else {
-		bitrate_data = TYPE_B_BITRATEMSB;
+	switch(rfm69.remote_type) {
+		case REMOTE_SWITCH_V2_REMOTE_TYPE_A: bitrate_data = TYPE_A_RECV_BITRATEMSB; break;
+		case REMOTE_SWITCH_V2_REMOTE_TYPE_B: bitrate_data = TYPE_B_RECV_BITRATEMSB; break;
+		case REMOTE_SWITCH_V2_REMOTE_TYPE_C: bitrate_data = TYPE_C_RECV_BITRATEMSB; break;
+		default: bitrate_data = TYPE_A_RECV_BITRATEMSB; break;
 	}
 	rfm69_task_write_register(REG_BITRATEMSB, &bitrate_data, 1);
 
-	if((rfm69.remote_type == REMOTE_SWITCH_V2_REMOTE_TYPE_A) || (rfm69.remote_type == REMOTE_SWITCH_V2_REMOTE_TYPE_C)) {
-		bitrate_data = TYPE_A_C_BITRATELSB/2;
-	} else {
-		bitrate_data = TYPE_B_BITRATELSB;
+	switch(rfm69.remote_type) {
+		case REMOTE_SWITCH_V2_REMOTE_TYPE_A: bitrate_data = TYPE_A_RECV_BITRATELSB; break;
+		case REMOTE_SWITCH_V2_REMOTE_TYPE_B: bitrate_data = TYPE_B_RECV_BITRATELSB; break;
+		case REMOTE_SWITCH_V2_REMOTE_TYPE_C: bitrate_data = TYPE_C_RECV_BITRATELSB; break;
+		default: bitrate_data = TYPE_A_RECV_BITRATELSB; break;
 	}
 	rfm69_task_write_register(REG_BITRATELSB, &bitrate_data, 1);
+
 
 	// Change to standby mode
 	uint8_t data_opmode;
@@ -287,7 +290,7 @@ void rfm69_task_switch(void) {
 
 	// Wait for 200ms to be sure that send is done,
 	// also we can't to transmit data in rapid succession
-	coop_task_sleep_ms(200);
+	coop_task_sleep_ms(300);
 
 	rfm69.switching_state = REMOTE_SWITCH_V2_SWITCHING_STATE_READY;
 	rfm69.switching_done_send_callback = true;
@@ -309,59 +312,89 @@ void rfm69_task_handle_buffer(void) {
 	// Only try to handle the data if there is enough data in the buffer for at least one command
 	while(bytes > rfm69.data_receive_command_length) {
 		for(uint8_t i = 0; i < rfm69.data_receive_command_length; i++) {
-			uint8_t data = (rfm69.data_receive[rfm69.data_receive_start + i] << rfm69.data_receive_start_bit) & 0xFF;
-			data |= (rfm69.data_receive[(rfm69.data_receive_start + i + 1) & DATA_RECEIVE_BUFFER_MASK] >> (8-rfm69.data_receive_start_bit)) & 0xFF;
+			uint16_t data16 = (rfm69.data_receive[rfm69.data_receive_start + i] << rfm69.data_receive_start_bit) & 0xFFFF;
+			data16 |= (rfm69.data_receive[(rfm69.data_receive_start + i + 1) & DATA_RECEIVE_BUFFER_MASK] >> (16-rfm69.data_receive_start_bit)) & 0xFFFF;
 
-			if(((data == RFM69_DATA_ON) || (data == RFM69_DATA_FLOAT)) ||
-			   ((rfm69.data_receive_command_bit == 12) && (data == RFM69_DATA_SYNC1)) ||
-			   ((rfm69.data_receive_command_bit == 13) && (data == RFM69_DATA_SYNC2))) {
-				if(data == RFM69_DATA_ON) {
-					rfm69.data_receive_command_new |= (1 << rfm69.data_receive_command_bit);
-				}
-				rfm69.data_receive_command_bit++;
+			uint8_t data8 = 0;
+			data8 |= (data16 & 0b0000000000000011) ? (1 << 0) : 0;
+			data8 |= (data16 & 0b0000000000001100) ? (1 << 1) : 0;
+			data8 |= (data16 & 0b0000000000110000) ? (1 << 2) : 0;
+			data8 |= (data16 & 0b0000000011000000) ? (1 << 3) : 0;
+			data8 |= (data16 & 0b0000001100000000) ? (1 << 4) : 0;
+			data8 |= (data16 & 0b0000110000000000) ? (1 << 5) : 0;
+			data8 |= (data16 & 0b0011000000000000) ? (1 << 6) : 0;
+			data8 |= (data16 & 0b1100000000000000) ? (1 << 7) : 0;
 
-				if(rfm69.data_receive_command_bit == rfm69.data_receive_command_length) {
-					// TODO: don't accept if onoff is not 10 or 01!
-					if(rfm69.data_receive_command_last[rfm69.remote_type] == rfm69.data_receive_command_new) {
-						rfm69.data_receive_command_count[rfm69.remote_type]++;
-					} else {
-						rfm69.data_receive_command_count[rfm69.remote_type] = 1;
+			if((rfm69.remote_type == REMOTE_SWITCH_V2_REMOTE_TYPE_A) || (rfm69.remote_type == REMOTE_SWITCH_V2_REMOTE_TYPE_C)) {
+				if(((data8 == RFM69_DATA_ON) || (data8 == RFM69_DATA_FLOAT)) ||
+				   ((rfm69.data_receive_command_bit == 12) && (data8 == RFM69_DATA_SYNC1)) ||
+				   ((rfm69.data_receive_command_bit == 13) && (data8 == RFM69_DATA_SYNC2))) {
+					if(data8 == RFM69_DATA_ON) {
+						rfm69.data_receive_command_new |= (1 << rfm69.data_receive_command_bit);
 					}
-					rfm69.data_receive_command_last[rfm69.remote_type] = rfm69.data_receive_command_new;
 
-					uint8_t house_code = rfm69.data_receive_command_new & 0b11111;
-					uint8_t receiver_code = (rfm69.data_receive_command_new >> 5) & 0b11111;
-					uint8_t onoff = 1;
-					if(((rfm69.data_receive_command_new >> 10) & 0b11) == 0b10) {
-						onoff = 0;
+					rfm69.data_receive_command_bit++;
+
+					if(rfm69.data_receive_command_bit == rfm69.data_receive_command_length) {
+						// TODO: don't accept if onoff is not 10 or 01?
+						if(rfm69.data_receive_command_last[rfm69.remote_type] == rfm69.data_receive_command_new) {
+							rfm69.data_receive_command_count[rfm69.remote_type]++;
+						} else {
+							rfm69.data_receive_command_count[rfm69.remote_type] = 1;
+						}
+						rfm69.data_receive_command_last[rfm69.remote_type] = rfm69.data_receive_command_new;
+
+						rfm69.data_receive_command_bit = 0;
+						rfm69.data_receive_command_new = 0;
+						rfm69.data_receive_start = (rfm69.data_receive_start + rfm69.data_receive_command_length) & DATA_RECEIVE_BUFFER_MASK;
 					}
-					uartbb_printf("code=%b, house=%b, receiver=%b, on=%u, atbit=%u (%u)\n\r", rfm69.data_receive_command_new, house_code, receiver_code, onoff, rfm69.data_receive_start_bit, rfm69.data_receive_command_count[rfm69.remote_type]);
-
+				} else {
 					rfm69.data_receive_command_bit = 0;
 					rfm69.data_receive_command_new = 0;
-					rfm69.data_receive_start = (rfm69.data_receive_start + rfm69.data_receive_command_length) & DATA_RECEIVE_BUFFER_MASK;
-				}
-			} else {
-				if(rfm69.data_receive_command_bit > 2) {
-					uint8_t house_code = rfm69.data_receive_command_new & 0b11111;
-					uint8_t receiver_code = (rfm69.data_receive_command_new >> 5) & 0b11111;
-					uint8_t onoff = 1;
-					if(((rfm69.data_receive_command_new >> 10) & 0b11) == 0b10) {
-						onoff = 0;
+					rfm69.data_receive_start_bit++;
+					if(rfm69.data_receive_start_bit == 16) {
+						rfm69.data_receive_start_bit = 0;
+						rfm69.data_receive_start = (rfm69.data_receive_start + 1) & DATA_RECEIVE_BUFFER_MASK;
 					}
-					uartbb_printf("abort code=%b house=%b, receiver=%b, on=%u, atbit=%u upto=%u\n\r", rfm69.data_receive_command_new, house_code, receiver_code, onoff, rfm69.data_receive_start_bit, rfm69.data_receive_command_bit);
 
+					break;
 				}
+			} else { // type b
+				// TODO: Add support for dimming (in case of dimming, the end sync moves by 4 bits
+				if(((data8 == RFM69_DATA_B_0) || (data8 == RFM69_DATA_B_1)) ||
+				   ((rfm69.data_receive_command_bit == 0) /*&& (data8 == 0b00000100)*/) || // Do not require leading "0b00000100", this gives lots of false positives because of the amount of 0s
+				   ((rfm69.data_receive_command_bit == 1) && (data8 == RFM69_DATA_SYNC2)) ||
+				   ((rfm69.data_receive_command_bit == 34) && (data8 == RFM69_DATA_SYNC1)) ||
+				   ((rfm69.data_receive_command_bit == 35) && (data8 == RFM69_DATA_SYNC2))) {
+					if(data8 == RFM69_DATA_B_1) {
+						rfm69.data_receive_command_new |= (((uint64_t)1) << rfm69.data_receive_command_bit);
+					}
 
-				rfm69.data_receive_command_bit = 0;
-				rfm69.data_receive_command_new = 0;
-				rfm69.data_receive_start_bit++;
-				if(rfm69.data_receive_start_bit == 8) {
-					rfm69.data_receive_start_bit = 0;
-					rfm69.data_receive_start = (rfm69.data_receive_start + 1) & DATA_RECEIVE_BUFFER_MASK;
+					rfm69.data_receive_command_bit++;
+
+					if(rfm69.data_receive_command_bit == rfm69.data_receive_command_length) {
+						if(rfm69.data_receive_command_last[rfm69.remote_type] == rfm69.data_receive_command_new) {
+							rfm69.data_receive_command_count[rfm69.remote_type]++;
+						} else {
+							rfm69.data_receive_command_count[rfm69.remote_type] = 1;
+						}
+						rfm69.data_receive_command_last[rfm69.remote_type] = rfm69.data_receive_command_new;
+
+						rfm69.data_receive_command_bit = 0;
+						rfm69.data_receive_command_new = 0;
+						rfm69.data_receive_start = (rfm69.data_receive_start + rfm69.data_receive_command_length) & DATA_RECEIVE_BUFFER_MASK;
+					}
+				} else {
+					rfm69.data_receive_command_bit = 0;
+					rfm69.data_receive_command_new = 0;
+					rfm69.data_receive_start_bit++;
+					if(rfm69.data_receive_start_bit == 16) {
+						rfm69.data_receive_start_bit = 0;
+						rfm69.data_receive_start = (rfm69.data_receive_start + 1) & DATA_RECEIVE_BUFFER_MASK;
+					}
+
+					break;
 				}
-
-				break;
 			}
 		}
 
@@ -386,17 +419,29 @@ void rfm69_task_tick(void) {
 	// Change to receive mode
 	rfm69_task_configure_receive();
 
+	bool msb = false;
 	while(true) {
 		// If the user wants to turn a remote switch on/off, we do this first
 		if(rfm69.switching_state == REMOTE_SWITCH_V2_SWITCHING_STATE_BUSY) {
 			rfm69_task_switch();
 		// Else, if there is data in the FIFO we handle it
 		} else if(XMC_GPIO_GetInput(RFM69_FIFO_NOT_EMPTY_PIN)) {
+			if(rfm69.remote_update) {
+				rfm69_task_configure_receive();
+				rfm69.remote_update = false;
+			}
 			uint8_t data;
 			rfm69_task_read_register(REG_FIFO, &data, 1);
-			rfm69.data_receive[rfm69.data_receive_end] = data;
-			rfm69.data_receive_end = (rfm69.data_receive_end + 1) & DATA_RECEIVE_BUFFER_MASK;
-			rfm69_task_handle_buffer();
+			if(msb) {
+				rfm69.data_receive[rfm69.data_receive_end] |= data & 0x00FF;
+				rfm69.data_receive_end = (rfm69.data_receive_end + 1) & DATA_RECEIVE_BUFFER_MASK;
+
+				msb = false;
+				rfm69_task_handle_buffer();
+			} else {
+				rfm69.data_receive[rfm69.data_receive_end] = (data << 8) & 0xFF00;
+				msb = true;
+			}
 		} else {
 			coop_task_yield();
 		}
@@ -522,27 +567,10 @@ void rfm69_init(void) {
 	XMC_GPIO_Init(RFM69_FIFO_NOT_EMPTY_PIN, &fifo_pin_config);
 	XMC_GPIO_SetHardwareControl(RFM69_FIFO_NOT_EMPTY_PIN, XMC_GPIO_HWCTRL_DISABLED);
 
-	// Test pin configuration (TODO: Remove me)
-	const XMC_GPIO_CONFIG_t test_pin_config = {
-		.mode             = XMC_GPIO_MODE_OUTPUT_PUSH_PULL,
-		.output_level     = XMC_GPIO_OUTPUT_LEVEL_LOW
-	};
-	XMC_GPIO_Init(P0_5, &test_pin_config);
-
 	rfm69_init_spi();
 	coop_task_init(&rfm69_task, rfm69_task_tick);
 }
 
-uint32_t count = 0;
-uint32_t t = 0;
-
 void rfm69_tick(void) {
-	if(system_timer_is_time_elapsed_ms(t, 1000)) {
-		t = system_timer_get_ms();
-
-		logi("tick: %u\n\r", count);
-		count++;
-	}
-
 	coop_task_tick(&rfm69_task);
 }
