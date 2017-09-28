@@ -38,7 +38,7 @@
     (43 Eco2.User user)
     (44 Edge.Cuts user)
     (48 B.Fab user)
-    (49 F.Fab user hide)
+    (49 F.Fab user)
   )
 
   (setup
@@ -6081,7 +6081,7 @@
     )
   )
 
-  (module kicad-libraries:QFN24-4x4mm-0.5mm (layer Vorderseite) (tedit 590CA070) (tstamp 59BA32C9)
+  (module kicad-libraries:QFN24-4x4mm-0.5mm (layer Vorderseite) (tedit 59CCAC20) (tstamp 59BA32C9)
     (at 51.7 49.3)
     (tags "QFN 24pin 0.5")
     (path /59B95367)
@@ -6089,7 +6089,7 @@
     (fp_text reference U1 (at 0 -0.4) (layer F.Fab)
       (effects (font (size 0.3 0.3) (thickness 0.075)))
     )
-    (fp_text value XMC1XXX24 (at 0 0.8) (layer F.Fab)
+    (fp_text value XMC1302-32 (at 0 0.8) (layer F.Fab)
       (effects (font (size 0.3 0.3) (thickness 0.075)))
     )
     (fp_line (start -1 -2) (end 2 -2) (layer F.Fab) (width 0.15))
