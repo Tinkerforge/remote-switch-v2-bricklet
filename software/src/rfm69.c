@@ -567,6 +567,14 @@ void rfm69_init(void) {
 	XMC_GPIO_Init(RFM69_FIFO_NOT_EMPTY_PIN, &fifo_pin_config);
 	XMC_GPIO_SetHardwareControl(RFM69_FIFO_NOT_EMPTY_PIN, XMC_GPIO_HWCTRL_DISABLED);
 
+	// Reset pin configuration (default = floating)
+	const XMC_GPIO_CONFIG_t reset_pin_config = {
+		.mode             = XMC_GPIO_MODE_INPUT_TRISTATE,
+		.input_hysteresis = XMC_GPIO_INPUT_HYSTERESIS_STANDARD
+	};
+	XMC_GPIO_Init(RFM69_RESET_PIN, &reset_pin_config);
+	XMC_GPIO_SetHardwareControl(RFM69_RESET_PIN, XMC_GPIO_HWCTRL_DISABLED);
+
 	rfm69_init_spi();
 	coop_task_init(&rfm69_task, rfm69_task_tick);
 }
