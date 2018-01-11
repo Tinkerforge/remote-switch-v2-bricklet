@@ -139,7 +139,7 @@ typedef struct {
 typedef struct {
 	TFPMessageHeader header;
 	uint8_t remote_type;
-	uint8_t minimum_repeats;
+	uint16_t minimum_repeats;
 	bool callback_enabled;
 } __attribute__((__packed__)) SetRemoteConfiguration;
 
@@ -150,7 +150,7 @@ typedef struct {
 typedef struct {
 	TFPMessageHeader header;
 	uint8_t remote_type;
-	uint8_t minimum_repeats;
+	uint16_t minimum_repeats;
 	bool callback_enabled;
 } __attribute__((__packed__)) GetRemoteConfiguration_Response;
 

@@ -61,7 +61,7 @@ typedef struct {
 	uint16_t data_receive_command_length;
 
 	uint8_t remote_type;
-	uint8_t remote_minimum_repeats;
+	uint16_t remote_minimum_repeats;
 	bool remote_callback_enabled;
 	bool remote_update;
 } RFM69;
