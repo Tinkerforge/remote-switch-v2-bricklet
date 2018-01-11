@@ -291,7 +291,7 @@ BootloaderHandleMessageResponse switch_socket_c(const SwitchSocketC *data) {
 }
 
 BootloaderHandleMessageResponse set_remote_configuration(const SetRemoteConfiguration *data) {
-	if(rfm69.remote_type > REMOTE_SWITCH_V2_REMOTE_TYPE_C || data->minimum_repeats == 0) {
+	if(data.remote_type > REMOTE_SWITCH_V2_REMOTE_TYPE_C || data->minimum_repeats == 0) {
 		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
 	}
 
