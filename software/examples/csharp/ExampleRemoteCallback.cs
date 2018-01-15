@@ -26,6 +26,9 @@ class Example
 		ipcon.Connect(HOST, PORT); // Connect to brickd
 		// Don't use device before ipcon is connected
 
+		// Configure to receive from remote type A with minimum repeats set to 1 and enable callback
+		rs.SetRemoteConfiguration(BrickletRemoteSwitchV2.REMOTE_TYPE_A, 1, true);
+
 		// Register remote status a callback to function RemoteStatusACB
 		rs.RemoteStatusACallback += RemoteStatusACB;
 

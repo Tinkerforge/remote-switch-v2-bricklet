@@ -50,6 +50,9 @@ begin
   ipcon.Connect(HOST, PORT);
   { Don't use device before ipcon is connected }
 
+  { Configure to receive from remote type A with minimum repeats set to 1 and enable callback }
+  rs.SetRemoteConfiguration(BRICKLET_REMOTE_SWITCH_V2_REMOTE_TYPE_A, 1, true);
+
   { Register remote status a callback to procedure RemoteStatusACB }
   rs.OnRemoteStatusA := {$ifdef FPC}@{$endif}RemoteStatusACB;
 

@@ -26,6 +26,9 @@ $rs = new BrickletRemoteSwitchV2(UID, $ipcon); // Create device object
 $ipcon->connect(HOST, PORT); // Connect to brickd
 // Don't use device before ipcon is connected
 
+// Configure to receive from remote type A with minimum repeats set to 1 and enable callback
+$rs->setRemoteConfiguration(BrickletRemoteSwitchV2::REMOTE_TYPE_A, 1, TRUE);
+
 // Register remote status a callback to function cb_remoteStatusA
 $rs->registerCallback(BrickletRemoteSwitchV2::CALLBACK_REMOTE_STATUS_A,
                       'cb_remoteStatusA');

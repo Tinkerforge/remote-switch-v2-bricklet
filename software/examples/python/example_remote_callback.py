@@ -23,6 +23,9 @@ if __name__ == "__main__":
     ipcon.connect(HOST, PORT) # Connect to brickd
     # Don't use device before ipcon is connected
 
+    # Configure to receive from remote type A with minimum repeats set to 1 and enable callback
+    rs.set_remote_configuration(rs.REMOTE_TYPE_A, 1, True)
+
     # Register remote status a callback to function cb_remote_status_a
     rs.register_callback(rs.CALLBACK_REMOTE_STATUS_A, cb_remote_status_a)
 

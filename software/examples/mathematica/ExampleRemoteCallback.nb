@@ -18,6 +18,10 @@ Notebook[{
    RowBox[{"ipcon", "@", RowBox[{"Connect", "[", RowBox[{"host", ",", "port"}], "]"}]}],
    RowBox[{"
 "}],
+   RowBox[{"(*", "Configure to receive from remote type A with minimum repeats set to 1 and enable callback", "*)"}],
+   RowBox[{"rs", "@", RowBox[{"SetRemoteConfiguration", "[", RowBox[{"BrickletRemoteSwitchV2`REMOTEUTYPEUA", ",", "1", ",", "True"}], "]"}]}],
+   RowBox[{"
+"}],
    RowBox[{"(*", "Callback function for remote status a callback", "*)"}],
    RowBox[{RowBox[{"RemoteStatusACB", "[", RowBox[{"sender_", ",", "houseCode_", ",", "receiverCode_", ",", "switchTo_", ",", "repeats_"}], "]"}], ":=", "\[IndentingNewLine]", RowBox[{"Module", "[", RowBox[{RowBox[{"{", "}"}], ",", RowBox[{"\[IndentingNewLine]", RowBox[{"Print", "[", RowBox[{"\"\<House Code: \>\"", "<>", RowBox[{"ToString", "[", "houseCode", "]"}]}], "]"}], ";", "\[IndentingNewLine]", RowBox[{"Print", "[", RowBox[{"\"\<Receiver Code: \>\"", "<>", RowBox[{"ToString", "[", "receiverCode", "]"}]}], "]"}], ";", "\[IndentingNewLine]", RowBox[{"Print", "[", RowBox[{"\"\<Switch To: \>\"", "<>", RowBox[{"ToString", "[", "switchTo", "]"}]}], "]"}], ";", "\[IndentingNewLine]", RowBox[{"Print", "[", RowBox[{"\"\<Repeats: \>\"", "<>", RowBox[{"ToString", "[", "repeats", "]"}]}], "]"}], "\[IndentingNewLine]"}]}], "]"}]}],
    RowBox[{"

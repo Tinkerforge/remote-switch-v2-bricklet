@@ -17,6 +17,9 @@ public class ExampleRemoteCallback {
 		ipcon.connect(HOST, PORT); // Connect to brickd
 		// Don't use device before ipcon is connected
 
+		// Configure to receive from remote type A with minimum repeats set to 1 and enable callback
+		rs.setRemoteConfiguration(BrickletRemoteSwitchV2.REMOTE_TYPE_A, 1, true);
+
 		// Add remote status a listener
 		rs.addRemoteStatusAListener(new BrickletRemoteSwitchV2.RemoteStatusAListener() {
 			public void remoteStatusA(int houseCode, int receiverCode, int switchTo,

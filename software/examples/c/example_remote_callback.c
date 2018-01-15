@@ -35,6 +35,10 @@ int main(void) {
 	}
 	// Don't use device before ipcon is connected
 
+	// Configure to receive from remote type A with minimum repeats set to 1 and enable callback
+	remote_switch_v2_set_remote_configuration(&rs, REMOTE_SWITCH_V2_REMOTE_TYPE_A, 1,
+	                                          true);
+
 	// Register remote status a callback to function cb_remote_status_a
 	remote_switch_v2_register_callback(&rs,
 	                                   REMOTE_SWITCH_V2_CALLBACK_REMOTE_STATUS_A,
