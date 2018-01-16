@@ -26,11 +26,15 @@
 
 #include "bricklib2/bootloader/bootloader.h"
 #include "bricklib2/hal/system_timer/system_timer.h"
+#include "bricklib2/logging/logging.h"
 #include "communication.h"
 #include "rfm69.h"
 
 
 int main(void) {
+	logging_init();
+	logd("Start Remote Switch Bricklet 2.0\n\r");
+
 	communication_init();
 	rfm69_init();
 
