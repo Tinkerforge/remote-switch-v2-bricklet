@@ -327,7 +327,7 @@ BootloaderHandleMessageResponse get_remote_status_a(const GetRemoteStatusA *data
 
 	response->repeats           = rfm69.data_receive_command_count[REMOTE_SWITCH_V2_REMOTE_TYPE_A];
 
-	if(response->repeats == 0) {
+	if(response->repeats == 0 || rfm69.remote_type != REMOTE_SWITCH_V2_REMOTE_TYPE_A) {
 		response->house_code    = 0;
 		response->receiver_code = 0;
 		response->switch_to     = 0;
@@ -349,7 +349,7 @@ BootloaderHandleMessageResponse get_remote_status_b(const GetRemoteStatusB *data
 	uint32_t command1 = command & 0xFFFFFFFF;
 	uint32_t command2 = (command >> 32L) & 0xFFFFFFFF;
 
-	if(response->repeats == 0) {
+	if(response->repeats == 0 || rfm69.remote_type != REMOTE_SWITCH_V2_REMOTE_TYPE_B) {
 		response->address   = 0;
 		response->unit      = 0;
 		response->switch_to = 0;
@@ -372,7 +372,7 @@ BootloaderHandleMessageResponse get_remote_status_c(const GetRemoteStatusC *data
 
 	response->repeats         = rfm69.data_receive_command_count[REMOTE_SWITCH_V2_REMOTE_TYPE_C];
 
-	if(response->repeats == 0) {
+	if(response->repeats == 0 || rfm69.remote_type != REMOTE_SWITCH_V2_REMOTE_TYPE_C) {
 		response->system_code = 'A';
 		response->device_code = 0;
 		response->switch_to   = 0;
