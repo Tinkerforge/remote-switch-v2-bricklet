@@ -118,7 +118,7 @@ void __attribute__((optimize("-O3"))) rfm69_tx_irq_handler(void) {
 }
 
 void rfm69_task_spi_transceive(void) {
-	XMC_SPI_CH_EnableSlaveSelect(RFM69_USIC, XMC_SPI_CH_SLAVE_SELECT_4);
+	XMC_SPI_CH_EnableSlaveSelect(RFM69_USIC, XMC_SPI_CH_SLAVE_SELECT_0);
 	XMC_USIC_CH_TXFIFO_EnableEvent(RFM69_USIC, XMC_USIC_CH_TXFIFO_EVENT_CONF_STANDARD);
 	XMC_USIC_CH_TriggerServiceRequest(RFM69_USIC, RFM69_SERVICE_REQUEST_TX);
 
