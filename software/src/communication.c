@@ -162,7 +162,6 @@ BootloaderHandleMessageResponse switch_socket_b(const SwitchSocketB *data) {
 	rfm69.data_switch[38] = 0b00000000;
 
 	rfm69.switching_state = REMOTE_SWITCH_V2_SWITCHING_STATE_BUSY;
-
 	return HANDLE_MESSAGE_RESPONSE_EMPTY;
 }
 
@@ -223,7 +222,6 @@ BootloaderHandleMessageResponse dim_socket_b(const DimSocketB *data) {
 	rfm69.data_switch[42] = 0b00000000;
 
 	rfm69.switching_state = REMOTE_SWITCH_V2_SWITCHING_STATE_BUSY;
-
 	return HANDLE_MESSAGE_RESPONSE_EMPTY;
 }
 
@@ -410,7 +408,6 @@ bool handle_switching_done_callback(void) {
 	return false;
 }
 
-uint32_t  tt = 0;
 bool handle_remote_status_a_callback(void) {
 	static bool is_buffered = false;
 	static RemoteStatusA_Callback cb;
