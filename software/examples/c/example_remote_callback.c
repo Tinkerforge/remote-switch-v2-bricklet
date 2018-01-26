@@ -12,10 +12,10 @@ void cb_remote_status_a(uint8_t house_code, uint8_t receiver_code, uint8_t switc
                         uint16_t repeats, void *user_data) {
 	(void)user_data; // avoid unused parameter warning
 
-	printf("House Code: %d\n", house_code);
-	printf("Receiver Code: %d\n", receiver_code);
-	printf("Switch To: %d\n", switch_to);
-	printf("Repeats: %d\n", repeats);
+	printf("House Code: %u\n", house_code);
+	printf("Receiver Code: %u\n", receiver_code);
+	printf("Switch To: %u\n", switch_to);
+	printf("Repeats: %u\n", repeats);
 	printf("\n");
 }
 
