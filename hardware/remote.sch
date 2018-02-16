@@ -29,7 +29,6 @@ LIBS:opto
 LIBS:atmel
 LIBS:contrib
 LIBS:valves
-LIBS:remote-cache
 EELAYER 25 0
 EELAYER END
 $Descr A4 11693 8268
@@ -670,7 +669,7 @@ Wire Wire Line
 	9700 4700 9700 4800
 Connection ~ 9700 4800
 $Comp
-L Conn_01x01 J1
+L CONN_01X01 J1
 U 1 1 59CD1718
 P 4250 5900
 F 0 "J1" H 4250 6000 50  0000 C CNN
