@@ -482,7 +482,7 @@ void rfm69_init_spi(void) {
 	};
 
 	// Configure MISO pin
-	XMC_GPIO_Init(RFM69_MOSI_PIN, &miso_pin_config);
+	XMC_GPIO_Init(RFM69_MISO_PIN, &miso_pin_config);
 
 	// Initialize USIC channel in SPI master mode
 	XMC_SPI_CH_Init(RFM69_USIC, &channel_config);
