@@ -31,8 +31,11 @@
 #define DATA_SPI_BUFFER_SIZE 128
 #define DATA_RECEIVE_COMMAND_BUFFER_SIZE 64
 
-#define DATA_RECEIVE_BUFFER_SIZE 2048
+#define DATA_RECEIVE_BUFFER_SIZE 1024
 #define DATA_RECEIVE_BUFFER_MASK (DATA_RECEIVE_BUFFER_SIZE-1)
+
+#define DATA_RECEIVE_DIGITIZED_BUFFER_SIZE 512
+#define DATA_RECEIVE_DIGITIZED_BUFFER_MASK (DATA_RECEIVE_DIGITIZED_BUFFER_SIZE-1)
 
 typedef struct {
 	uint8_t switching_state;
@@ -49,10 +52,15 @@ typedef struct {
 	uint8_t data_write_index;
 	uint16_t data_length;
 
-	uint16_t data_receive[DATA_RECEIVE_BUFFER_SIZE];
-	uint16_t data_receive_end;
-	uint16_t data_receive_start;
+	uint32_t data_receive[DATA_RECEIVE_BUFFER_SIZE];
+	int16_t data_receive_end;
+	int16_t data_receive_start;
 	uint8_t data_receive_start_bit;
+
+	uint8_t data_receive_digitized[DATA_RECEIVE_DIGITIZED_BUFFER_SIZE];
+	int16_t data_receive_digitized_end;
+	int16_t data_receive_digitized_start;
+	uint8_t data_receive_digitized_start_bit;
 
 	uint64_t data_receive_command_last[DATA_RECEIVE_COMMAND_NUM];
 	uint16_t data_receive_command_count[DATA_RECEIVE_COMMAND_NUM];
@@ -1163,6 +1171,7 @@ typedef enum {
 #define TYPE_B_RECV_BITRATELSB 0x41
 #define TYPE_A_RECV_BITRATEMSB 0x13 // ~319us half clock cycle with double bitrate
 #define TYPE_A_RECV_BITRATELSB 0xF0
+
 
 #define TYPE_A_C_BITRATEMSB 0x27 // ~319us half clock cycle
 #define TYPE_A_C_BITRATELSB 0xE0

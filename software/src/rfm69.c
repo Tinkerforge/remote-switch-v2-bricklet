@@ -302,29 +302,106 @@ void rfm69_task_switch(void) {
 	}
 }
 
-void rfm69_task_handle_buffer(void) {
-	// Calculate number of buffered bytes
-	int32_t bytes = rfm69.data_receive_end - rfm69.data_receive_start;
+// Walk bits from MSB to LSB
+inline void rfm69_task_increase_receive_bit(void) {
+	if(rfm69.data_receive_start_bit == 0) {
+		rfm69.data_receive_start_bit = 31;
+		rfm69.data_receive_start = (rfm69.data_receive_start + 1) & DATA_RECEIVE_BUFFER_MASK;
+	} else {
+		rfm69.data_receive_start_bit--;
+	}
+}
+
+inline uint8_t rfm69_task_current_receive_bit(void) {
+	return (rfm69.data_receive[rfm69.data_receive_start] & (1 << rfm69.data_receive_start_bit)) ? 1 : 0;
+}
+
+int32_t rfm69_task_get_digitized_fill_level(void) {
+	int32_t bytes = rfm69.data_receive_digitized_end - rfm69.data_receive_digitized_start;
 	if(bytes < 0) {
-		bytes += DATA_RECEIVE_BUFFER_SIZE;
+		bytes += DATA_RECEIVE_DIGITIZED_BUFFER_MASK;
 	}
 
+	return bytes;
+}
+
+void rfm69_task_handle_buffer(void) {
+	static uint32_t bit_count = 0;
+	static uint8_t data = 0;
+	static uint8_t data_shift = 0;
+	static uint8_t current_bit = 0;
+
+	while((rfm69.data_receive_start != rfm69.data_receive_end) && (rfm69_task_get_digitized_fill_level() < (DATA_RECEIVE_DIGITIZED_BUFFER_SIZE-4))) {
+		uint8_t next_bit = rfm69_task_current_receive_bit();
+		rfm69_task_increase_receive_bit();
+
+		if(next_bit == current_bit) {
+			bit_count++;
+		} else {
+			uint8_t num = 0;
+			// Interpret 2x oversampled input as "analog values" and allow some
+			// inaccuracies in the protocol. In tests we found that the bit rate from
+			// remote to remote can differ by ~25%.
+			// Example: If we expect a "1" in the on-off-keying we expect to see "11"
+			// in the data stream (2x oversampling). But since we know that in the protocol
+			// the number of successive ones can only be 1 or 3, we can interpret
+			// "1", "11" and "111" as a digitized one etc.
+			if((rfm69.remote_type == REMOTE_SWITCH_V2_REMOTE_TYPE_A) || (rfm69.remote_type == REMOTE_SWITCH_V2_REMOTE_TYPE_C)) {
+				if(bit_count <= 3) {
+					num = 1; // Up to 3 bits in a row is interpreted as 1
+				} else if(bit_count <= 9) {
+					num = 3; // Up to 9 bits in a row is interpreted as 3
+				} else if(bit_count > 20) {
+					num = 8+7; // More than 20 is interpreted as 15 (sync)
+				} else {
+					num = 2; // We explicitly disallow everything in-between, we set 2 bits for it, since that is not allowed in the protocol
+				}
+			} else { // Type B
+				if(bit_count <= 5) {
+					num = 1; // Up to 5 bits in a row is interpreted as 1
+				} else if(bit_count <= 14) {
+					if(current_bit) {
+						num = 2; // We explicitly disallow between 6 and 13 ones. We set 2 bits for it, since that is not allowed in the protocol
+					} else {
+						num = 5; // Up to 14 bits in a row is interpreted as 1
+					}
+				} else {
+					num = 8+7; // More than 14 is interpreted as 15 (sync)
+				}
+			}
+
+			// Put digitized data into fifo
+			for(uint8_t i = 0; i < num; i++) {
+				data |= (current_bit << (7-data_shift));
+				data_shift++;
+				if(data_shift == 8) {
+					rfm69.data_receive_digitized[rfm69.data_receive_digitized_end] = data;
+
+					data_shift = 0;
+					data = 0;
+
+					rfm69.data_receive_digitized_end = (rfm69.data_receive_digitized_end + 1) & DATA_RECEIVE_DIGITIZED_BUFFER_MASK;
+				}
+			}
+
+			bit_count = 1;
+			current_bit = next_bit;
+		}
+	}
+
+
+	int32_t bytes = rfm69_task_get_digitized_fill_level();
+
 	// Only try to handle the data if there is enough data in the buffer for at least one command
-	while(bytes > rfm69.data_receive_command_length) {
+	while(bytes > (rfm69.data_receive_command_length+1)) {
+		// Now we try to interpret the data that was "digitized" above.
 		for(uint8_t i = 0; i < rfm69.data_receive_command_length; i++) {
-			uint16_t data16 = (rfm69.data_receive[rfm69.data_receive_start + i] << rfm69.data_receive_start_bit) & 0xFFFF;
-			data16 |= (rfm69.data_receive[(rfm69.data_receive_start + i + 1) & DATA_RECEIVE_BUFFER_MASK] >> (16-rfm69.data_receive_start_bit)) & 0xFFFF;
+			uint8_t data_l = rfm69.data_receive_digitized[(rfm69.data_receive_digitized_start + i) & DATA_RECEIVE_DIGITIZED_BUFFER_MASK];
+			uint8_t data_h = rfm69.data_receive_digitized[(rfm69.data_receive_digitized_start + i + 1) & DATA_RECEIVE_DIGITIZED_BUFFER_MASK];
 
-			uint8_t data8 = 0;
-			data8 |= (data16 & 0b0000000000000011) ? (1 << 0) : 0;
-			data8 |= (data16 & 0b0000000000001100) ? (1 << 1) : 0;
-			data8 |= (data16 & 0b0000000000110000) ? (1 << 2) : 0;
-			data8 |= (data16 & 0b0000000011000000) ? (1 << 3) : 0;
-			data8 |= (data16 & 0b0000001100000000) ? (1 << 4) : 0;
-			data8 |= (data16 & 0b0000110000000000) ? (1 << 5) : 0;
-			data8 |= (data16 & 0b0011000000000000) ? (1 << 6) : 0;
-			data8 |= (data16 & 0b1100000000000000) ? (1 << 7) : 0;
+			uint8_t data8 = ((data_l << rfm69.data_receive_digitized_start_bit) & 0xFF) | ((data_h >> (8 - rfm69.data_receive_digitized_start_bit)) & 0xFF);
 
+			// type a
 			if((rfm69.remote_type == REMOTE_SWITCH_V2_REMOTE_TYPE_A) || (rfm69.remote_type == REMOTE_SWITCH_V2_REMOTE_TYPE_C)) {
 				if(((data8 == RFM69_DATA_ON) || (data8 == RFM69_DATA_FLOAT)) ||
 				   ((rfm69.data_receive_command_bit == 12) && (data8 == RFM69_DATA_SYNC1)) ||
@@ -336,7 +413,6 @@ void rfm69_task_handle_buffer(void) {
 					rfm69.data_receive_command_bit++;
 
 					if(rfm69.data_receive_command_bit == rfm69.data_receive_command_length) {
-						// TODO: don't accept if onoff is not 10 or 01?
 						if(rfm69.data_receive_command_last[rfm69.remote_type] == rfm69.data_receive_command_new) {
 							rfm69.data_receive_command_count[rfm69.remote_type]++;
 						} else {
@@ -346,20 +422,21 @@ void rfm69_task_handle_buffer(void) {
 
 						rfm69.data_receive_command_bit = 0;
 						rfm69.data_receive_command_new = 0;
-						rfm69.data_receive_start = (rfm69.data_receive_start + rfm69.data_receive_command_length) & DATA_RECEIVE_BUFFER_MASK;
+						rfm69.data_receive_digitized_start = (rfm69.data_receive_digitized_start + rfm69.data_receive_command_length) & DATA_RECEIVE_DIGITIZED_BUFFER_MASK;
 					}
 				} else {
 					rfm69.data_receive_command_bit = 0;
 					rfm69.data_receive_command_new = 0;
-					rfm69.data_receive_start_bit++;
-					if(rfm69.data_receive_start_bit == 16) {
-						rfm69.data_receive_start_bit = 0;
-						rfm69.data_receive_start = (rfm69.data_receive_start + 1) & DATA_RECEIVE_BUFFER_MASK;
+					rfm69.data_receive_digitized_start_bit++;
+					if(rfm69.data_receive_digitized_start_bit == 8) {
+						rfm69.data_receive_digitized_start_bit = 0;
+						rfm69.data_receive_digitized_start = (rfm69.data_receive_digitized_start + 1) & DATA_RECEIVE_DIGITIZED_BUFFER_MASK;
 					}
 
 					break;
 				}
-			} else { // type b
+			} else {
+				// type b
 				// TODO: Add support for dimming (in case of dimming, the end sync moves by 4 bits
 				if(((data8 == RFM69_DATA_B_0) || (data8 == RFM69_DATA_B_1)) ||
 				   ((rfm69.data_receive_command_bit == 0) /*&& (data8 == 0b00000100)*/) || // Do not require leading "0b00000100", this gives lots of false positives because of the amount of 0s
@@ -382,15 +459,15 @@ void rfm69_task_handle_buffer(void) {
 
 						rfm69.data_receive_command_bit = 0;
 						rfm69.data_receive_command_new = 0;
-						rfm69.data_receive_start = (rfm69.data_receive_start + rfm69.data_receive_command_length) & DATA_RECEIVE_BUFFER_MASK;
+						rfm69.data_receive_digitized_start = (rfm69.data_receive_digitized_start + rfm69.data_receive_command_length) & DATA_RECEIVE_DIGITIZED_BUFFER_MASK;
 					}
 				} else {
 					rfm69.data_receive_command_bit = 0;
 					rfm69.data_receive_command_new = 0;
-					rfm69.data_receive_start_bit++;
-					if(rfm69.data_receive_start_bit == 16) {
-						rfm69.data_receive_start_bit = 0;
-						rfm69.data_receive_start = (rfm69.data_receive_start + 1) & DATA_RECEIVE_BUFFER_MASK;
+					rfm69.data_receive_digitized_start_bit++;
+					if(rfm69.data_receive_digitized_start_bit == 8) {
+						rfm69.data_receive_digitized_start_bit = 0;
+						rfm69.data_receive_digitized_start = (rfm69.data_receive_digitized_start + 1) & DATA_RECEIVE_DIGITIZED_BUFFER_MASK;
 					}
 
 					break;
@@ -398,13 +475,8 @@ void rfm69_task_handle_buffer(void) {
 			}
 		}
 
-		bytes = rfm69.data_receive_end - rfm69.data_receive_start;
-		if(bytes < 0) {
-			bytes += DATA_RECEIVE_BUFFER_SIZE;
-		}
-
+		bytes = rfm69_task_get_digitized_fill_level();
 	}
-
 }
 
 void rfm69_task_tick(void) {
@@ -419,7 +491,8 @@ void rfm69_task_tick(void) {
 	// Change to receive mode
 	rfm69_task_configure_receive();
 
-	bool msb = false;
+	uint8_t shift = 24;
+	uint32_t data32 = 0;
 	while(true) {
 		// If the user wants to turn a remote switch on/off, we do this first
 		if(rfm69.switching_state == REMOTE_SWITCH_V2_SWITCHING_STATE_BUSY) {
@@ -430,17 +503,26 @@ void rfm69_task_tick(void) {
 				rfm69_task_configure_receive();
 				rfm69.remote_update = false;
 			}
+
 			uint8_t data;
 			rfm69_task_read_register(REG_FIFO, &data, 1);
-			if(msb) {
-				rfm69.data_receive[rfm69.data_receive_end] |= data & 0x00FF;
-				rfm69.data_receive_end = (rfm69.data_receive_end + 1) & DATA_RECEIVE_BUFFER_MASK;
+			switch(shift) {
+				case 0: {
+					rfm69.data_receive[rfm69.data_receive_end] = data32 | data;
+					rfm69.data_receive_end = (rfm69.data_receive_end + 1) & DATA_RECEIVE_BUFFER_MASK;
 
-				msb = false;
-				rfm69_task_handle_buffer();
-			} else {
-				rfm69.data_receive[rfm69.data_receive_end] = (data << 8) & 0xFF00;
-				msb = true;
+					shift = 24;
+					data32 = 0;
+
+					rfm69_task_handle_buffer();
+					break;
+				}
+
+				default: {
+					data32 |= (data << shift);
+					shift -= 8;
+					break;
+				}
 			}
 		} else {
 			coop_task_yield();
@@ -558,6 +640,8 @@ void rfm69_init(void) {
 	rfm69.remote_callback_enabled = false;
 	rfm69.remote_minimum_repeats = 2;
 	rfm69.remote_type = REMOTE_SWITCH_V2_REMOTE_TYPE_A;
+
+	rfm69.data_receive_start_bit = 31;
 
 	// FIFO pin configuration
 	const XMC_GPIO_CONFIG_t fifo_pin_config = {
