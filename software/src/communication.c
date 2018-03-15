@@ -477,7 +477,7 @@ bool handle_remote_status_b_callback(void) {
 				cb.switch_to = 0;
 				cb.dim_value = 0;
 			} else {
-				cb.address   = (command >> 2) & 0b11111111111111111111111111;;
+				cb.address   = (command >> 2) & 0b11111111111111111111111111;
 				cb.unit      = (command >> 30) & 0b1111;
 				if((command >> 28) & 0b1) {
 					cb.unit  = 0xff;
