@@ -498,7 +498,7 @@ void rfm69_init_spi(void) {
 
 	// Configure the clock polarity and clock delay
 	XMC_SPI_CH_ConfigureShiftClockOutput(RFM69_USIC,
-									     XMC_SPI_CH_BRG_SHIFT_CLOCK_PASSIVE_LEVEL_1_DELAY_DISABLED,
+									     XMC_SPI_CH_BRG_SHIFT_CLOCK_PASSIVE_LEVEL_0_DELAY_ENABLED,
 									     XMC_SPI_CH_BRG_SHIFT_CLOCK_OUTPUT_SCLK);
 	// Configure Leading/Trailing delay
 	XMC_SPI_CH_SetSlaveSelectDelay(RFM69_USIC, 2);
