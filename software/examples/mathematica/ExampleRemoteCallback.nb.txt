@@ -11,7 +11,7 @@ rs=NETNew["Tinkerforge.BrickletRemoteSwitchV2",uid,ipcon]
 ipcon@Connect[host,port]
 
 (*Configure to receive from remote type A with minimum repeats set to 1 and enable callback*)
-rs@SetRemoteConfiguration[BrickletRemoteSwitchV2`REMOTEUTYPEUA,1,True]
+rs@SetRemoteConfiguration[Tinkerforge`BrickletRemoteSwitchV2`REMOTEUTYPEUA,1,True]
 
 (*Callback function for remote status a callback*)
 RemoteStatusACB[sender_,houseCode_,receiverCode_,switchTo_,repeats_]:=

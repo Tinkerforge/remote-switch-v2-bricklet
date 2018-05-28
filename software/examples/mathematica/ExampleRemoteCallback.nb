@@ -19,7 +19,7 @@ Notebook[{
    RowBox[{"
 "}],
    RowBox[{"(*", "Configure to receive from remote type A with minimum repeats set to 1 and enable callback", "*)"}],
-   RowBox[{"rs", "@", RowBox[{"SetRemoteConfiguration", "[", RowBox[{"BrickletRemoteSwitchV2`REMOTEUTYPEUA", ",", "1", ",", "True"}], "]"}]}],
+   RowBox[{"rs", "@", RowBox[{"SetRemoteConfiguration", "[", RowBox[{"Tinkerforge`BrickletRemoteSwitchV2`REMOTEUTYPEUA", ",", "1", ",", "True"}], "]"}]}],
    RowBox[{"
 "}],
    RowBox[{"(*", "Callback function for remote status a callback", "*)"}],
