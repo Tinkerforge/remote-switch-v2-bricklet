@@ -4,3 +4,6 @@
 2.0.1:
 - Digitize 2x oversampled input data in a fuzzy-manner to allow for bit-rate differences between remotes
 - Use passive level 0 as expected by RFM69 IC 
+
+2018-10-04: 2.0.2 (TBD)
+- Fix race condition with potential buffer overflow (through bricklib2)
