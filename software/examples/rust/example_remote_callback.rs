@@ -15,10 +15,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Configure to receive from remote type A with minimum repeats set to 1 and enable callback
     rs.set_remote_configuration(REMOTE_SWITCH_V2_BRICKLET_REMOTE_TYPE_A, 1, true);
 
-    // Create receiver for remote status a events.
-    let remote_status_a_receiver = rs.get_remote_status_a_receiver();
+    let remote_status_a_receiver = rs.get_remote_status_a_callback_receiver();
 
-    // Spawn thread to handle received events. This thread ends when the `rs` object
+    // Spawn thread to handle received callback messages.
+    // This thread ends when the `rs` object
     // is dropped, so there is no need for manual cleanup.
     thread::spawn(move || {
         for remote_status_a in remote_status_a_receiver {
