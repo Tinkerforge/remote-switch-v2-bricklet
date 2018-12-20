@@ -14,7 +14,13 @@ void cb_remote_status_a(uint8_t house_code, uint8_t receiver_code, uint8_t switc
 
 	printf("House Code: %u\n", house_code);
 	printf("Receiver Code: %u\n", receiver_code);
-	printf("Switch To: %u\n", switch_to);
+
+	if(switch_to == REMOTE_SWITCH_V2_SWITCH_TO_OFF) {
+		printf("Switch To: Off\n");
+	} else if(switch_to == REMOTE_SWITCH_V2_SWITCH_TO_ON) {
+		printf("Switch To: On\n");
+	}
+
 	printf("Repeats: %u\n", repeats);
 	printf("\n");
 }

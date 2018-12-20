@@ -15,7 +15,16 @@ sub cb_remote_status_a
 
     print "House Code: $house_code\n";
     print "Receiver Code: $receiver_code\n";
-    print "Switch To: $switch_to\n";
+
+    if ($switch_to == Tinkerforge::BrickletRemoteSwitchV2->SWITCH_TO_OFF)
+    {
+        print "Switch To: Off\n";
+    }
+    elsif ($switch_to == Tinkerforge::BrickletRemoteSwitchV2->SWITCH_TO_ON)
+    {
+        print "Switch To: On\n";
+    }
+
     print "Repeats: $repeats\n";
     print "\n";
 }

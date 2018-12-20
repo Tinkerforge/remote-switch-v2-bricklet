@@ -25,7 +25,13 @@ end
 function cb_remote_status_a(e)
     fprintf("House Code: %d\n", e.houseCode);
     fprintf("Receiver Code: %d\n", e.receiverCode);
-    fprintf("Switch To: %d\n", e.switchTo);
+
+    if e.switchTo == 0
+        fprintf("Switch To: Off\n");
+    elseif e.switchTo == 1
+        fprintf("Switch To: On\n");
+    end
+
     fprintf("Repeats: %d\n", e.repeats);
     fprintf("\n");
 end

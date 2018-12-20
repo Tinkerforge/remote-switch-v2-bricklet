@@ -26,7 +26,13 @@ rs.register_callback(BrickletRemoteSwitchV2::CALLBACK_REMOTE_STATUS_A) do |house
                                                                            repeats|
   puts "House Code: #{house_code}"
   puts "Receiver Code: #{receiver_code}"
-  puts "Switch To: #{switch_to}"
+
+  if switch_to == BrickletRemoteSwitchV2::SWITCH_TO_OFF
+    puts "Switch To: Off"
+  elsif switch_to == BrickletRemoteSwitchV2::SWITCH_TO_ON
+    puts "Switch To: On"
+  end
+
   puts "Repeats: #{repeats}"
   puts ''
 end

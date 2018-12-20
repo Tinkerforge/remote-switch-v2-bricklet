@@ -13,7 +13,16 @@ class Example
 	{
 		Console.WriteLine("House Code: " + houseCode);
 		Console.WriteLine("Receiver Code: " + receiverCode);
-		Console.WriteLine("Switch To: " + switchTo);
+
+		if(switchTo == BrickletRemoteSwitchV2.SWITCH_TO_OFF)
+		{
+			Console.WriteLine("Switch To: Off");
+		}
+		else if(switchTo == BrickletRemoteSwitchV2.SWITCH_TO_ON)
+		{
+			Console.WriteLine("Switch To: On");
+		}
+
 		Console.WriteLine("Repeats: " + repeats);
 		Console.WriteLine("");
 	}

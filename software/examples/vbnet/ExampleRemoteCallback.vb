@@ -12,7 +12,13 @@ Module ExampleRemoteCallback
                         ByVal repeats As Integer)
         Console.WriteLine("House Code: " + houseCode.ToString())
         Console.WriteLine("Receiver Code: " + receiverCode.ToString())
-        Console.WriteLine("Switch To: " + switchTo.ToString())
+
+        If switchTo = BrickletRemoteSwitchV2.SWITCH_TO_OFF Then
+            Console.WriteLine("Switch To: Off")
+        Else If switchTo = BrickletRemoteSwitchV2.SWITCH_TO_ON Then
+            Console.WriteLine("Switch To: On")
+        End If
+
         Console.WriteLine("Repeats: " + repeats.ToString())
         Console.WriteLine("")
     End Sub

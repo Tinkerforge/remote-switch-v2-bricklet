@@ -33,7 +33,14 @@ procedure TExample.RemoteStatusACB(sender: TBrickletRemoteSwitchV2; const houseC
 begin
   WriteLn(Format('House Code: %d', [houseCode]));
   WriteLn(Format('Receiver Code: %d', [receiverCode]));
-  WriteLn(Format('Switch To: %d', [switchTo]));
+
+  if (switchTo = BRICKLET_REMOTE_SWITCH_V2_SWITCH_TO_OFF) then begin
+    WriteLn('Switch To: Off');
+  end
+  else if (switchTo = BRICKLET_REMOTE_SWITCH_V2_SWITCH_TO_ON) then begin
+    WriteLn('Switch To: On');
+  end;
+
   WriteLn(Format('Repeats: %d', [repeats]));
   WriteLn('');
 end;

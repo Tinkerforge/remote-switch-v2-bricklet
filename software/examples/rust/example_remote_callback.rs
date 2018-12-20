@@ -24,7 +24,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         for remote_status_a in remote_status_a_receiver {
             println!("House Code: {}", remote_status_a.house_code);
             println!("Receiver Code: {}", remote_status_a.receiver_code);
-            println!("Switch To: {}", remote_status_a.switch_to);
+
+            if remote_status_a.switch_to == REMOTE_SWITCH_V2_BRICKLET_SWITCH_TO_OFF {
+                println!("Switch To: Off");
+            } else if remote_status_a.switch_to == REMOTE_SWITCH_V2_BRICKLET_SWITCH_TO_ON {
+                println!("Switch To: On");
+            }
+
             println!("Repeats: {}", remote_status_a.repeats);
             println!();
         }

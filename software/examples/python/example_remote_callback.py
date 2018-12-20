@@ -12,7 +12,12 @@ from tinkerforge.bricklet_remote_switch_v2 import BrickletRemoteSwitchV2
 def cb_remote_status_a(house_code, receiver_code, switch_to, repeats):
     print("House Code: " + str(house_code))
     print("Receiver Code: " + str(receiver_code))
-    print("Switch To: " + str(switch_to))
+
+    if switch_to == BrickletRemoteSwitchV2.SWITCH_TO_OFF:
+        print("Switch To: Off")
+    elif switch_to == BrickletRemoteSwitchV2.SWITCH_TO_ON:
+        print("Switch To: On")
+
     print("Repeats: " + str(repeats))
     print("")
 

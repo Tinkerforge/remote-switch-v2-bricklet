@@ -26,7 +26,13 @@ public class ExampleRemoteCallback {
 			                          int repeats) {
 				System.out.println("House Code: " + houseCode);
 				System.out.println("Receiver Code: " + receiverCode);
-				System.out.println("Switch To: " + switchTo);
+
+				if(switchTo == BrickletRemoteSwitchV2.SWITCH_TO_OFF) {
+					System.out.println("Switch To: Off");
+				} else if(switchTo == BrickletRemoteSwitchV2.SWITCH_TO_ON) {
+					System.out.println("Switch To: On");
+				}
+
 				System.out.println("Repeats: " + repeats);
 				System.out.println("");
 			}

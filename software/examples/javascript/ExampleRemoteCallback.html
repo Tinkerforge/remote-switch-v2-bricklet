@@ -53,7 +53,14 @@
                     function (houseCode, receiverCode, switchTo, repeats) {
                         textArea.value += 'House Code: ' + houseCode + '\n';
                         textArea.value += 'Receiver Code: ' + receiverCode + '\n';
-                        textArea.value += 'Switch To: ' + switchTo + '\n';
+
+                        if(switchTo === Tinkerforge.BrickletRemoteSwitchV2.SWITCH_TO_OFF) {
+                            textArea.value += 'Switch To: Off\n';
+                        }
+                        else if(switchTo === Tinkerforge.BrickletRemoteSwitchV2.SWITCH_TO_ON) {
+                            textArea.value += 'Switch To: On\n';
+                        }
+
                         textArea.value += 'Repeats: ' + repeats + '\n';
                         textArea.value += '\n';
                         textArea.scrollTop = textArea.scrollHeight;

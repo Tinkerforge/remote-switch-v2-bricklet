@@ -15,7 +15,13 @@ function cb_remoteStatusA($house_code, $receiver_code, $switch_to, $repeats)
 {
     echo "House Code: $house_code\n";
     echo "Receiver Code: $receiver_code\n";
-    echo "Switch To: $switch_to\n";
+
+    if ($switch_to == BrickletRemoteSwitchV2::SWITCH_TO_OFF) {
+        echo "Switch To: Off\n";
+    } elseif ($switch_to == BrickletRemoteSwitchV2::SWITCH_TO_ON) {
+        echo "Switch To: On\n";
+    }
+
     echo "Repeats: $repeats\n";
     echo "\n";
 }

@@ -18,7 +18,8 @@ RemoteStatusACB[sender_,houseCode_,receiverCode_,switchTo_,repeats_]:=
  Module[{},
   Print["House Code: "<>ToString[houseCode]];
   Print["Receiver Code: "<>ToString[receiverCode]];
-  Print["Switch To: "<>ToString[switchTo]];
+  If[switchTo==Tinkerforge`BrickletRemoteSwitchV2`SWITCHUTOUOFF,Print["Switch To: Off"]];
+  If[switchTo==Tinkerforge`BrickletRemoteSwitchV2`SWITCHUTOUON,Print["Switch To: On"]];
   Print["Repeats: "<>ToString[repeats]]
  ]
 

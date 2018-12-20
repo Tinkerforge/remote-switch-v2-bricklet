@@ -28,7 +28,14 @@ rs.on(Tinkerforge.BrickletRemoteSwitchV2.CALLBACK_REMOTE_STATUS_A,
     function (houseCode, receiverCode, switchTo, repeats) {
         console.log('House Code: ' + houseCode);
         console.log('Receiver Code: ' + receiverCode);
-        console.log('Switch To: ' + switchTo);
+
+        if(switchTo === Tinkerforge.BrickletRemoteSwitchV2.SWITCH_TO_OFF) {
+            console.log('Switch To: Off');
+        }
+        else if(switchTo === Tinkerforge.BrickletRemoteSwitchV2.SWITCH_TO_ON) {
+            console.log('Switch To: On');
+        }
+
         console.log('Repeats: ' + repeats);
         console.log();
     }
