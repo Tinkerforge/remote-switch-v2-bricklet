@@ -48,7 +48,7 @@ int main(void) {
 	// Register remote status a callback to function cb_remote_status_a
 	remote_switch_v2_register_callback(&rs,
 	                                   REMOTE_SWITCH_V2_CALLBACK_REMOTE_STATUS_A,
-	                                   (void *)cb_remote_status_a,
+	                                   (void (*)(void))cb_remote_status_a,
 	                                   NULL);
 
 	printf("Press key to exit\n");
