@@ -3,7 +3,7 @@
 setup:
 	# Configure to receive from remote type A with minimum repeats set to 1 and enable callback
 	publish '{"remote_type": "a", "minimum_repeats": 1, "callback_enabled": true}' to tinkerforge/request/remote_switch_v2_bricklet/XYZ/set_remote_configuration 
-	
+
 	# Handle incoming remote status a callbacks
 	subscribe to tinkerforge/callback/remote_switch_v2_bricklet/XYZ/remote_status_a
 	publish '{"register": true}' to tinkerforge/register/remote_switch_v2_bricklet/XYZ/remote_status_a # Register remote_status_a callback
