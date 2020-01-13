@@ -34,5 +34,5 @@ if __name__ == "__main__":
     # Register remote status a callback to function cb_remote_status_a
     rs.register_callback(rs.CALLBACK_REMOTE_STATUS_A, cb_remote_status_a)
 
-    raw_input("Press key to exit\n") # Use input() in Python 3
+    input("Press key to exit\n") # Use raw_input() in Python 2
     ipcon.disconnect()
