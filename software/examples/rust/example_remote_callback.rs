@@ -13,7 +13,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                                           // Don't use device before ipcon is connected.
 
     // Configure to receive from remote type A with minimum repeats set to 1 and enable callback
-    rs.set_remote_configuration(REMOTE_SWITCH_V2_BRICKLET_REMOTE_TYPE_A, 1, true);
+    rs.set_remote_configuration(REMOTE_SWITCH_V2_BRICKLET_REMOTE_TYPE_A, 1, true).recv()?;
 
     let remote_status_a_receiver = rs.get_remote_status_a_callback_receiver();
 
