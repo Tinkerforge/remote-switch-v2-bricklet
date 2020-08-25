@@ -1,13 +1,9 @@
-
-
 #include "bindings/hal_common.h"
 #include "bindings/bricklet_remote_switch_v2.h"
 
 #define UID "XYZ" // Change XYZ to the UID of your Remote Switch Bricklet 2.0
 
 void check(int rc, const char* msg);
-
-
 
 // Callback function for remote status a callback
 void remote_status_a_handler(TF_RemoteSwitchV2 *device, uint8_t house_code,
@@ -27,7 +23,6 @@ void remote_status_a_handler(TF_RemoteSwitchV2 *device, uint8_t house_code,
 	tf_hal_printf("Repeats: %u\n", repeats);
 	tf_hal_printf("\n");
 }
-
 
 TF_RemoteSwitchV2 rs;
 
