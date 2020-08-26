@@ -30,7 +30,6 @@ void example_setup(TF_HalContext *hal) {
 	// Create device object
 	check(tf_remote_switch_v2_create(&rs, UID, hal), "create device object");
 
-
 	// Configure to receive from remote type A with minimum repeats set to 1 and enable callback
 	check(tf_remote_switch_v2_set_remote_configuration(&rs,
 	                                                   TF_REMOTE_SWITCH_V2_REMOTE_TYPE_A,
@@ -39,9 +38,8 @@ void example_setup(TF_HalContext *hal) {
 
 	// Register remote status a callback to function remote_status_a_handler
 	tf_remote_switch_v2_register_remote_status_a_callback(&rs,
-	                                                     remote_status_a_handler,
-	                                                     NULL);
-
+	                                                      remote_status_a_handler,
+	                                                      NULL);
 }
 
 void example_loop(TF_HalContext *hal) {
