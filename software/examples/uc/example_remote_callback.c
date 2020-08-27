@@ -5,10 +5,14 @@
 
 void check(int rc, const char* msg);
 
+void example_setup(TF_HalContext *hal);
+void example_loop(TF_HalContext *hal);
+
+
 // Callback function for remote status a callback
-void remote_status_a_handler(TF_RemoteSwitchV2 *device, uint8_t house_code,
-                             uint8_t receiver_code, uint8_t switch_to, uint16_t repeats,
-                             void *user_data) {
+static void remote_status_a_handler(TF_RemoteSwitchV2 *device, uint8_t house_code,
+                                    uint8_t receiver_code, uint8_t switch_to,
+                                    uint16_t repeats, void *user_data) {
 	(void)device; (void)user_data; // avoid unused parameter warning
 
 	tf_hal_printf("House Code: %u\n", house_code);
@@ -24,7 +28,7 @@ void remote_status_a_handler(TF_RemoteSwitchV2 *device, uint8_t house_code,
 	tf_hal_printf("\n");
 }
 
-TF_RemoteSwitchV2 rs;
+static TF_RemoteSwitchV2 rs;
 
 void example_setup(TF_HalContext *hal) {
 	// Create device object
