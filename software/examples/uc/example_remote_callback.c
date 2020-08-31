@@ -15,8 +15,8 @@ static void remote_status_a_handler(TF_RemoteSwitchV2 *device, uint8_t house_cod
                                     uint16_t repeats, void *user_data) {
 	(void)device; (void)user_data; // avoid unused parameter warning
 
-	tf_hal_printf("House Code: %u\n", house_code);
-	tf_hal_printf("Receiver Code: %u\n", receiver_code);
+	tf_hal_printf("House Code: %I8u\n", house_code);
+	tf_hal_printf("Receiver Code: %I8u\n", receiver_code);
 
 	if(switch_to == TF_REMOTE_SWITCH_V2_SWITCH_TO_OFF) {
 		tf_hal_printf("Switch To: Off\n");
@@ -24,7 +24,7 @@ static void remote_status_a_handler(TF_RemoteSwitchV2 *device, uint8_t house_cod
 		tf_hal_printf("Switch To: On\n");
 	}
 
-	tf_hal_printf("Repeats: %u\n", repeats);
+	tf_hal_printf("Repeats: %I16u\n", repeats);
 	tf_hal_printf("\n");
 }
 
