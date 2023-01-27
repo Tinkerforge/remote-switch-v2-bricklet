@@ -6,11 +6,11 @@
 
   (title_block
     (title "Remote Bricklet")
-    (date "2017-09-13")
+    (date "2023-01-27")
     (rev "2.0")
     (company "Tinkerforge GmbH")
     (comment 1 "Licensed under CERN OHL v.1.1")
-    (comment 2 "Copyright (©) 2017, B.Nordmeyer <bastian@tinkerforge.com>")
+    (comment 2 "Copyright (©) 2023, B.Nordmeyer <bastian@tinkerforge.com>")
   )
 
   (lib_symbols
@@ -1076,7 +1076,7 @@
     (effects (font (size 0.9906 0.9906)) (justify left bottom))
     (uuid 0d3f32c6-9f3e-4fb3-beb1-5b9b6f5bceae)
   )
-  (text "Copyright Tinkerforge GmbH 2017.\nThis documentation describes Open Hardware and is licensed under the\nCERN OHL v. 1.1.\nYou may redistribute and modify this documentation under the terms of the\nCERN OHL v.1.1. (http://ohwr.org/cernohl). This documentation is distributed\nWITHOUT ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING OF\nMERCHANTABILITY, SATISFACTORY QUALITY AND FITNESS FOR A\nPARTICULAR PURPOSE. Please see the CERN OHL v.1.1 for applicable\nconditions\n"
+  (text "Copyright Tinkerforge GmbH 2023.\nThis documentation describes Open Hardware and is licensed under the\nCERN OHL v. 1.1.\nYou may redistribute and modify this documentation under the terms of the\nCERN OHL v.1.1. (http://ohwr.org/cernohl). This documentation is distributed\nWITHOUT ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING OF\nMERCHANTABILITY, SATISFACTORY QUALITY AND FITNESS FOR A\nPARTICULAR PURPOSE. Please see the CERN OHL v.1.1 for applicable\nconditions\n"
     (at 15.24 194.31 0)
     (effects (font (size 1.016 1.016)) (justify left bottom))
     (uuid 43064a35-7bab-4b68-a82b-c923d6e97745)
